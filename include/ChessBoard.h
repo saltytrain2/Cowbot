@@ -76,7 +76,7 @@ private:
     bool mBlackCastle[2];
 
     // A square-centric represenation of the board
-    PieceSets m88Board[64];
+    PieceSets mSquareBoard[64];
 
     std::vector<Bitmove> mMoveList;
 };

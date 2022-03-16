@@ -2,7 +2,7 @@
 
 
 ChessBoard::ChessBoard(std::string layout)
-    : mPieceBB{}, mTurn(white), mWhiteCastle{}, mBlackCastle{}, m88Board{}, mMoveList()
+    : mPieceBB{}, mTurn(white), mWhiteCastle{}, mBlackCastle{}, mSquareBoard{}, mMoveList()
 {
     // one vector to hold all the necessary fields from layout
     // one vector to hold the pieces by rank, 0 index starts at rank 8
@@ -102,14 +102,12 @@ int ChessBoard::makeMove(const Move& nextMove) noexcept
     Bitmove move = nextMove.getMove();
     uint16_t startingSquare = move & 0x3F;
     uint16_t endingSquare = (move & 0xFC0) >> 6;
-    std::cout << startingSquare << endingSquare << " ";
 
     // // TODO
     // // assume that the move given is valid for now
 
-    PieceSets movedPiece = m88Board[startingSquare];
-    PieceSets capturedPiece = m88Board[endingSquare];
-    std::cout << movedPiece << capturedPiece;
+    PieceSets movedPiece = mSquareBoard[startingSquare];
+    PieceSets capturedPiece = mSquareBoard[endingSquare];
     mPieceBB[movedPiece] |= uint64_t(1) << endingSquare;
     mPieceBB[movedPiece] &= ~(uint64_t(1) << startingSquare);
 
@@ -129,10 +127,10 @@ void ChessBoard::update88Board() noexcept
     for (Square i = a1; i < null; ++i) {
         for (PieceSets j = whitePawns; j < whitePieces; ++j) {
             if (mPieceBB[j] & Bitboard(1) << i) {
-                m88Board[i] = j;
+                mSquareBoard[i] = j;
                 break;
             }
-            m88Board[i] = emptySquares;
+            mSquareBoard[i] = emptySquares;
         }
     }
 }
@@ -140,29 +138,29 @@ void ChessBoard::update88Board() noexcept
 void ChessBoard::print88Board() const noexcept
 {
     for (Square i = null; i > a1; --i) {
-        if (m88Board[i - 1] == whitePawns) {
+        if (mSquareBoard[i - 1] == whitePawns) {
             std::cout << "P";
-        } else if (m88Board[i - 1] == whiteKnights) {
+        } else if (mSquareBoard[i - 1] == whiteKnights) {
             std::cout << "N";
-        } else if (m88Board[i - 1] == whiteBishops) {
+        } else if (mSquareBoard[i - 1] == whiteBishops) {
             std::cout << "B";
-        } else if (m88Board[i - 1] == whiteRooks) {
+        } else if (mSquareBoard[i - 1] == whiteRooks) {
             std::cout << "R";
-        } else if (m88Board[i - 1] == whiteQueens) {
+        } else if (mSquareBoard[i - 1] == whiteQueens) {
             std::cout << "Q";
-        } else if (m88Board[i - 1] == whiteKing) {
+        } else if (mSquareBoard[i - 1] == whiteKing) {
             std::cout << "K";
-        } else if (m88Board[i - 1] == blackPawns) {
+        } else if (mSquareBoard[i - 1] == blackPawns) {
             std::cout << "p";
-        } else if (m88Board[i - 1] == blackKnights) {
+        } else if (mSquareBoard[i - 1] == blackKnights) {
             std::cout << "n";
-        } else if (m88Board[i - 1] == blackBishops) {
+        } else if (mSquareBoard[i - 1] == blackBishops) {
             std::cout << "b";
-        } else if (m88Board[i - 1] == blackRooks) {
+        } else if (mSquareBoard[i - 1] == blackRooks) {
             std::cout << "r";
-        } else if (m88Board[i - 1] == blackQueens) {
+        } else if (mSquareBoard[i - 1] == blackQueens) {
             std::cout << "q";
-        } else if (m88Board[i - 1] == blackKing) {
+        } else if (mSquareBoard[i - 1] == blackKing) {
             std::cout << "k";
         } else {
             std::cout << " ";

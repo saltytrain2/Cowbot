@@ -9,5 +9,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_compile_options(-Wall -Werror -Wextra -pedantic -pedantic-errors -g -fsanitize=address)
 add_link_options(-fsanitize=address)
 
+enable_testing()
 add_subdirectory(src)
 add_subdirectory(tests)
