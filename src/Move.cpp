@@ -17,3 +17,12 @@ Move::Move(std::string lan) : mMove(0)
         mMove |= 1 << 15;
     }   
 }
+
+Move::Move(Bitmove src) : mMove(src)
+{
+}
+
+Bitmove Move::getMove() const noexcept
+{
+    return mMove;
+}

@@ -4,6 +4,7 @@
 #include <cctype>
 #include <string>
 #include <sstream>
+#include <iostream>
 #include <vector>
 #include "types.h"
 #include "Move.h"
@@ -20,35 +21,42 @@ public:
     ChessBoard& operator=(const ChessBoard& rhs) = default;
 
     // All of the get methods for each bitboard
-    Bitboard getWhitePawns() const noexcept;
-    Bitboard getWhiteKnights() const noexcept;
-    Bitboard getWhiteBishops() const noexcept;
-    Bitboard getWhiteRooks() const noexcept;
-    Bitboard getWhiteQueens() const noexcept;
-    Bitboard getWhiteKing() const noexcept;
-    Bitboard getBlackPawns() const noexcept;
-    Bitboard getBlackBishops() const noexcept;
-    Bitboard getBlackKnights() const noexcept;
-    Bitboard getBlackRooks() const noexcept;
-    Bitboard getBlackQueens() const noexcept;
-    Bitboard getBlackKing() const noexcept;
-    Bitboard getWhitePieces() const noexcept;
-    Bitboard getBlackPieces() const noexcept;
-    Bitboard getAllPieces() const noexcept;
-    Bitboard getAllEmptySquares() const noexcept;
+    inline Bitboard getWhitePawns() const noexcept {return mPieceBB[whitePawns];}
+    inline Bitboard getWhiteKnights() const noexcept {return mPieceBB[whiteKnights];}
+    inline Bitboard getWhiteBishops() const noexcept {return mPieceBB[whiteBishops];}
+    inline Bitboard getWhiteRooks() const noexcept {return mPieceBB[whiteRooks];}
+    inline Bitboard getWhiteQueens() const noexcept {return mPieceBB[whiteQueens];}
+    inline Bitboard getWhiteKing() const noexcept {return mPieceBB[whiteKing];}
+    inline Bitboard getBlackPawns() const noexcept {return mPieceBB[blackPawns];}
+    inline Bitboard getBlackKnights() const noexcept {return mPieceBB[blackKnights];}
+    inline Bitboard getBlackBishops() const noexcept {return mPieceBB[blackBishops];}
+    inline Bitboard getBlackRooks() const noexcept {return mPieceBB[blackRooks];}
+    inline Bitboard getBlackQueens() const noexcept {return mPieceBB[blackQueens];}
+    inline Bitboard getBlackKing() const noexcept {return mPieceBB[blackKing];}
+    inline Bitboard getWhitePieces() const noexcept {return mPieceBB[whitePieces];}
+    inline Bitboard getBlackPieces() const noexcept {return mPieceBB[blackPieces];}
+    inline Bitboard getAllPieces() const noexcept {return mPieceBB[allPieces];}
+    inline Bitboard getEmptySquares() const noexcept {return mPieceBB[emptySquares];}
 
     // get method for the turn
-    Bitboard getTurn() const noexcept;
+    inline Bitboard getTurn() const noexcept {return mTurn;}
 
     // get methods for castling rights
-    bool getWhiteCastleRights(Castling side) const noexcept;
-    bool getBlackCastleRights(Castling side) const noexcept;
+    inline bool getWhiteCastleRights(Castling side) const noexcept {return mWhiteCastle[side];}
+    inline bool getBlackCastleRights(Castling side) const noexcept {return mBlackCastle[side];}
 
-    void makeMove(Move nextMove);
+    inline std::vector<Bitmove> getMoveList() const noexcept {return mMoveList;}
+    void print88Board() const noexcept;
+
+    // makes the move
+    int makeMove(const Move& nextMove) noexcept;
 
     // TODO 
     // possibly have to overload this function with a string and rank version
-    void setBitboards(const std::vector<std::string>& piecesByRank);
+    void updateBitboards(const std::vector<std::string>& piecesByRank) noexcept;
+
+    void updateRedundantBitboards() noexcept;
+    void update88Board() noexcept;
 
 
 
@@ -66,4 +74,9 @@ private:
     // index 0 for kingside, index 1 for queenside
     bool mWhiteCastle[2];
     bool mBlackCastle[2];
+
+    // A square-centric represenation of the board
+    PieceSets m88Board[64];
+
+    std::vector<Bitmove> mMoveList;
 };

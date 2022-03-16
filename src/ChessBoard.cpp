@@ -2,7 +2,7 @@
 
 
 ChessBoard::ChessBoard(std::string layout)
-    : mPieceBB{}, mTurn(white), mWhiteCastle{}, mBlackCastle{}
+    : mPieceBB{}, mTurn(white), mWhiteCastle{}, mBlackCastle{}, m88Board{}, mMoveList()
 {
     // one vector to hold all the necessary fields from layout
     // one vector to hold the pieces by rank, 0 index starts at rank 8
@@ -19,7 +19,7 @@ ChessBoard::ChessBoard(std::string layout)
     while(std::getline(s, item, '/')) {
         pieceRank.push_back(item);
     }
-    setBitboards(pieceRank);
+    updateBitboards(pieceRank);
 
     // initializing mTurn
     if (fenFields[1] == "b") {
@@ -45,104 +45,10 @@ ChessBoard::ChessBoard(std::string layout)
                 break;
         }
     }
+    update88Board();
 }
 
-Bitboard ChessBoard::getWhitePawns() const noexcept
-{
-    return mPieceBB[whitePawns];
-}
-
-Bitboard ChessBoard::getWhiteKnights() const noexcept
-{
-    return mPieceBB[whiteKnights];
-}
-
-Bitboard ChessBoard::getWhiteBishops() const noexcept
-{
-    return mPieceBB[whiteBishops];
-}
-
-Bitboard ChessBoard::getWhiteRooks() const noexcept
-{
-    return mPieceBB[whiteRooks];
-}
-
-Bitboard ChessBoard::getWhiteQueens() const noexcept
-{
-    return mPieceBB[whiteQueens];
-}
-
-Bitboard ChessBoard::getWhiteKing() const noexcept
-{
-    return mPieceBB[whiteKing];
-}
-
-Bitboard ChessBoard::getBlackPawns() const noexcept
-{
-    return mPieceBB[blackPawns];
-}
-
-Bitboard ChessBoard::getBlackKnights() const noexcept
-{
-    return mPieceBB[blackKnights];
-}
-
-Bitboard ChessBoard::getBlackBishops() const noexcept
-{
-    return mPieceBB[blackBishops];
-}
-
-Bitboard ChessBoard::getBlackRooks() const noexcept
-{
-    return mPieceBB[blackRooks];
-}
-
-Bitboard ChessBoard::getBlackQueens() const noexcept
-{
-    return mPieceBB[blackQueens];
-}
-
-Bitboard ChessBoard::getBlackKing() const noexcept
-{
-    return mPieceBB[blackKing];
-}
-
-Bitboard ChessBoard::getWhitePieces() const noexcept
-{
-    return mPieceBB[whitePieces];
-}
-
-Bitboard ChessBoard::getBlackPieces() const noexcept
-{
-    return mPieceBB[blackPieces];
-}
-
-Bitboard ChessBoard::getAllPieces() const noexcept
-{
-    return mPieceBB[allPieces];
-}
-
-Bitboard ChessBoard::getAllEmptySquares() const noexcept
-{
-    return mPieceBB[allEmptySquares];
-}
-
-Bitboard ChessBoard::getTurn() const noexcept
-{
-    return mTurn;
-}
-
-bool ChessBoard::getWhiteCastleRights(Castling side) const noexcept
-{
-    return mWhiteCastle[side];
-}
-
-bool ChessBoard::getBlackCastleRights(Castling side) const noexcept
-{
-    return mBlackCastle[side];
-}
-
-void ChessBoard::setBitboards(const std::vector<std::string>& piecesByRank)
+void ChessBoard::updateBitboards(const std::vector<std::string>& piecesByRank) noexcept
 {
     uint64_t shiftIndex = 56;
     for (auto i: piecesByRank) {
@@ -180,8 +86,91 @@ void ChessBoard::setBitboards(const std::vector<std::string>& piecesByRank)
         }
         shiftIndex -= 16;
     }
+    updateRedundantBitboards();
+}
+
+void ChessBoard::updateRedundantBitboards() noexcept
+{
     mPieceBB[whitePieces] = mPieceBB[whitePawns] & mPieceBB[whiteKnights] & mPieceBB[whiteBishops] & mPieceBB[whiteRooks] & mPieceBB[whiteQueens] & mPieceBB[whiteKing];
     mPieceBB[blackPieces] = mPieceBB[blackPawns] & mPieceBB[blackKnights] & mPieceBB[blackBishops] & mPieceBB[blackRooks] & mPieceBB[blackQueens] & mPieceBB[blackKing];
     mPieceBB[allPieces] = mPieceBB[whitePieces] & mPieceBB[blackPieces];
-    mPieceBB[allEmptySquares] = ~mPieceBB[allPieces];
+    mPieceBB[emptySquares] = ~mPieceBB[allPieces];
+}
+
+int ChessBoard::makeMove(const Move& nextMove) noexcept
+{
+    Bitmove move = nextMove.getMove();
+    uint16_t startingSquare = move & 0x3F;
+    uint16_t endingSquare = (move & 0xFC0) >> 6;
+    std::cout << startingSquare << endingSquare << " ";
+
+    // // TODO
+    // // assume that the move given is valid for now
+
+    PieceSets movedPiece = m88Board[startingSquare];
+    PieceSets capturedPiece = m88Board[endingSquare];
+    std::cout << movedPiece << capturedPiece;
+    mPieceBB[movedPiece] |= uint64_t(1) << endingSquare;
+    mPieceBB[movedPiece] &= ~(uint64_t(1) << startingSquare);
+
+    if (capturedPiece != emptySquares) {
+        mPieceBB[capturedPiece] &= ~(uint64_t(1) << endingSquare);
+    }
+
+    updateRedundantBitboards();
+    update88Board();
+
+    mMoveList.push_back(move);
+    return 0;
+}
+
+void ChessBoard::update88Board() noexcept
+{
+    for (Square i = a1; i < null; ++i) {
+        for (PieceSets j = whitePawns; j < whitePieces; ++j) {
+            if (mPieceBB[j] & Bitboard(1) << i) {
+                m88Board[i] = j;
+                break;
+            }
+            m88Board[i] = emptySquares;
+        }
+    }
+}
+
+void ChessBoard::print88Board() const noexcept
+{
+    for (Square i = null; i > a1; --i) {
+        if (m88Board[i - 1] == whitePawns) {
+            std::cout << "P";
+        } else if (m88Board[i - 1] == whiteKnights) {
+            std::cout << "N";
+        } else if (m88Board[i - 1] == whiteBishops) {
+            std::cout << "B";
+        } else if (m88Board[i - 1] == whiteRooks) {
+            std::cout << "R";
+        } else if (m88Board[i - 1] == whiteQueens) {
+            std::cout << "Q";
+        } else if (m88Board[i - 1] == whiteKing) {
+            std::cout << "K";
+        } else if (m88Board[i - 1] == blackPawns) {
+            std::cout << "p";
+        } else if (m88Board[i - 1] == blackKnights) {
+            std::cout << "n";
+        } else if (m88Board[i - 1] == blackBishops) {
+            std::cout << "b";
+        } else if (m88Board[i - 1] == blackRooks) {
+            std::cout << "r";
+        } else if (m88Board[i - 1] == blackQueens) {
+            std::cout << "q";
+        } else if (m88Board[i - 1] == blackKing) {
+            std::cout << "k";
+        } else {
+            std::cout << " ";
+        }
+
+        // if last square in row
+        if (i % 8 == 1) {
+            std::cout << std::endl;
+        } 
+    }
 }
