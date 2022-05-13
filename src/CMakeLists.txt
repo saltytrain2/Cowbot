@@ -1,4 +1,4 @@
-add_library(ChessEngine ChessBoard.cpp Move.cpp)
+add_library(ChessEngine ChessBoard.cpp Move.cpp PieceUtils.cpp)
 target_include_directories(ChessEngine PUBLIC ../include)
 
 add_executable(driver main.cpp)

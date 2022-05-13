@@ -4,6 +4,7 @@
 #include <string>
 
 typedef uint64_t Bitboard;
+typedef uint64_t AttackBoard;
 typedef std::string UCImove;
 typedef uint16_t Bitmove;
 
@@ -45,6 +46,13 @@ inline PieceSets operator++(PieceSets& rhs)
 {
     uint8_t pieceAsInt = static_cast<uint8_t>(rhs);
     rhs = static_cast<PieceSets>(++pieceAsInt);
+    return rhs;
+}
+
+inline PieceSets operator--(PieceSets& rhs)
+{
+    uint8_t pieceAsInt = static_cast<uint8_t>(rhs);
+    rhs = static_cast<PieceSets>(--pieceAsInt);
     return rhs;
 }
 
