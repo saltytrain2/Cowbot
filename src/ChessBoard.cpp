@@ -45,7 +45,107 @@ ChessBoard::ChessBoard(std::string layout)
                 break;
         }
     }
-    update88Board();
+    updateSquareBoard();
+}
+
+Bitboard ChessBoard::getWhitePawns() const noexcept
+{
+    return mPieceBB[whitePawns];
+}
+
+Bitboard ChessBoard::getWhiteKnights() const noexcept
+{
+    return mPieceBB[whiteKnights];
+}
+
+Bitboard ChessBoard::getWhiteBishops() const noexcept
+{
+    return mPieceBB[whiteBishops];
+}
+
+Bitboard ChessBoard::getWhiteRooks() const noexcept
+{
+    return mPieceBB[whiteRooks];
+}
+
+Bitboard ChessBoard::getWhiteQueens() const noexcept
+{
+    return mPieceBB[whiteQueens];
+}
+
+Bitboard ChessBoard::getWhiteKing() const noexcept
+{
+    return mPieceBB[whiteKing];
+}
+
+Bitboard ChessBoard::getBlackPawns() const noexcept
+{
+    return mPieceBB[blackPawns];
+}
+
+Bitboard ChessBoard::getBlackKnights() const noexcept
+{
+    return mPieceBB[blackKnights];
+}
+
+Bitboard ChessBoard::getBlackBishops() const noexcept
+{
+    return mPieceBB[blackBishops];
+}
+
+Bitboard ChessBoard::getBlackRooks() const noexcept
+{
+    return mPieceBB[blackRooks];
+}
+
+Bitboard ChessBoard::getBlackQueens() const noexcept
+{
+    return mPieceBB[blackQueens];
+}
+
+Bitboard ChessBoard::getBlackKing() const noexcept
+{
+    return mPieceBB[blackKing];
+}
+
+Bitboard ChessBoard::getWhitePieces() const noexcept
+{
+    return mPieceBB[whitePieces];
+}
+
+Bitboard ChessBoard::getBlackPieces() const noexcept
+{
+    return mPieceBB[blackPieces];
+}
+
+Bitboard ChessBoard::getAllPieces() const noexcept
+{
+    return mPieceBB[allPieces];
+}
+
+Bitboard ChessBoard::getEmptySquares() const noexcept
+{
+    return mPieceBB[emptySquares];
+}
+
+Color ChessBoard::getTurn() const noexcept
+{
+    return mTurn;
+}
+
+bool ChessBoard::getWhiteCastleRights(Castling side) const noexcept
+{
+    return mWhiteCastle[side];
+}
+
+bool ChessBoard::getBlackCastleRights(Castling side) const noexcept
+{
+    return mBlackCastle[side];
+}
+
+std::vector<Move> ChessBoard::getMoveList() const noexcept
+{
+    return mMoveList;
 }
 
 void ChessBoard::updateBitboards(const std::vector<std::string>& piecesByRank) noexcept
@@ -97,78 +197,119 @@ void ChessBoard::updateRedundantBitboards() noexcept
     mPieceBB[emptySquares] = ~mPieceBB[allPieces];
 }
 
-int ChessBoard::makeMove(const Move& nextMove) noexcept
+int ChessBoard::makeMove(Move& nextMove) noexcept
 {
     Bitmove move = nextMove.getMove();
-    uint16_t startingSquare = move & 0x3F;
-    uint16_t endingSquare = (move & 0xFC0) >> 6;
+    Square startingSquare = Square(move & 0x003F);
+    Square endingSquare = Square((move & 0x0FC0) >> 6);
 
     // // TODO
     // // assume that the move given is valid for now
 
     PieceSets movedPiece = mSquareBoard[startingSquare];
     PieceSets capturedPiece = mSquareBoard[endingSquare];
-    mPieceBB[movedPiece] |= uint64_t(1) << endingSquare;
-    mPieceBB[movedPiece] &= ~(uint64_t(1) << startingSquare);
+
+    mPieceBB[movedPiece] |= Bitboard(1) << endingSquare;
+    mPieceBB[movedPiece] &= ~(Bitboard(1) << startingSquare);
 
     if (capturedPiece != emptySquares) {
-        mPieceBB[capturedPiece] &= ~(uint64_t(1) << endingSquare);
+        nextMove.setCapturedPiece(capturedPiece);
+        mPieceBB[capturedPiece] &= ~(Bitboard(1) << endingSquare);
     }
 
     updateRedundantBitboards();
-    update88Board();
+    updateSquareBoard();
 
-    mMoveList.push_back(move);
+    mMoveList.push_back(nextMove);
     return 0;
 }
 
-void ChessBoard::update88Board() noexcept
+
+void ChessBoard::updateSquareBoard() noexcept
 {
     for (Square i = a1; i < null; ++i) {
+        bool changed = false;
         for (PieceSets j = whitePawns; j < whitePieces; ++j) {
-            if (mPieceBB[j] & Bitboard(1) << i) {
+            if (mPieceBB[j] & uint64_t(1) << i) {
                 mSquareBoard[i] = j;
-                break;
+                changed = true;
             }
+        }
+        if (!changed) {
             mSquareBoard[i] = emptySquares;
         }
     }
 }
 
-void ChessBoard::print88Board() const noexcept
+void ChessBoard::printSquareBoard() const noexcept
 {
+    std::cout << "-----------------" << std::endl;
+    std::string row;
     for (Square i = null; i > a1; --i) {
+        row += "|";
         if (mSquareBoard[i - 1] == whitePawns) {
-            std::cout << "P";
+            row += "P";
         } else if (mSquareBoard[i - 1] == whiteKnights) {
-            std::cout << "N";
+            row += "N";
         } else if (mSquareBoard[i - 1] == whiteBishops) {
-            std::cout << "B";
+            row += "B";
         } else if (mSquareBoard[i - 1] == whiteRooks) {
-            std::cout << "R";
+            row += "R";
         } else if (mSquareBoard[i - 1] == whiteQueens) {
-            std::cout << "Q";
+            row += "Q";
         } else if (mSquareBoard[i - 1] == whiteKing) {
-            std::cout << "K";
+            row += "K";
         } else if (mSquareBoard[i - 1] == blackPawns) {
-            std::cout << "p";
+            row += "p";
         } else if (mSquareBoard[i - 1] == blackKnights) {
-            std::cout << "n";
+            row += "n";
         } else if (mSquareBoard[i - 1] == blackBishops) {
-            std::cout << "b";
+            row += "b";
         } else if (mSquareBoard[i - 1] == blackRooks) {
-            std::cout << "r";
+            row += "r";
         } else if (mSquareBoard[i - 1] == blackQueens) {
-            std::cout << "q";
+            row += "q";
         } else if (mSquareBoard[i - 1] == blackKing) {
-            std::cout << "k";
+            row += "k";
         } else {
-            std::cout << " ";
+            row += " ";
         }
+        //std::cout << "|";
 
         // if last square in row
         if (i % 8 == 1) {
-            std::cout << std::endl;
+            row += "|";
+            std::reverse(row.begin(), row.end());
+            std::cout << row << std::endl;
+            std::cout << "-----------------" << std::endl;
+            row.clear();
         } 
     }
+    std::cout << std::endl;
+}
+
+void ChessBoard::undoMove() 
+{
+    Bitmove move = mMoveList[mMoveList.size() - 1].getMove();
+    Square startingSquare = Square(move & 0x3F);
+    Square endingSquare = Square((move & 0xFC0) >> 6);
+
+    PieceSets movedPiece = mSquareBoard[endingSquare];
+    PieceSets capturedPiece = mMoveList[mMoveList.size() - 1].getCapturedPiece();
+    mPieceBB[movedPiece] |= Bitboard(1) << startingSquare;
+    mPieceBB[movedPiece] &= ~(Bitboard(1) << endingSquare);
+    
+    if (capturedPiece != emptySquares) {
+        mPieceBB[capturedPiece] |= Bitboard(1) << endingSquare;
+    }
+
+    updateRedundantBitboards();
+    updateSquareBoard();
+    mMoveList.pop_back();
+}
+
+bool ChessBoard::isLegal(const Move& nextMove)
+{
+    (void)nextMove;
+    return true;
 }
