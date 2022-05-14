@@ -4,7 +4,6 @@
 #include <string>
 
 typedef uint64_t Bitboard;
-typedef uint64_t AttackBoard;
 typedef std::string UCImove;
 typedef uint16_t Bitmove;
 
@@ -33,6 +32,20 @@ inline Square operator--(Square& rhs)
 {
     uint8_t squareAsInt = static_cast<uint8_t>(rhs);
     rhs = static_cast<Square>(--squareAsInt);
+    return rhs;
+}
+
+inline Square operator+=(Square& rhs, uint8_t offset)
+{
+    uint8_t squareAsInt = static_cast<uint8_t>(rhs);
+    rhs = static_cast<Square>(squareAsInt + offset);
+    return rhs;
+}
+
+inline Square operator-=(Square& rhs, uint8_t offset)
+{
+    uint8_t squareAsInt = static_cast<uint8_t>(rhs);
+    rhs = static_cast<Square>(squareAsInt - offset);
     return rhs;
 }
 

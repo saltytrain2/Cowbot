@@ -83,6 +83,10 @@ private:
 
     // A square-centric represenation of the board
     PieceSets mSquareBoard[64];
-
+    // A list of moves that have been currently made
     std::vector<Move> mMoveList;
+
+    // keeping track of which pieces are currently pinned
+    // index 0 for white, index 1 for black
+    Bitboard pinnedPieces[2];
 };

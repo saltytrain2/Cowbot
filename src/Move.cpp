@@ -1,5 +1,4 @@
 #include "Move.h"
-#include <string>
 
 Move::Move(std::string lan) : mMove(0), mCapturedPiece(emptySquares)
 {
