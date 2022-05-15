@@ -10,7 +10,7 @@ typedef uint16_t Bitmove;
 enum Color {white, black};
 
 // Little Endian Rank-File Mapping 
-enum Square {
+enum Square : uint8_t {
     a1, b1, c1, d1, e1, f1, g1, h1,
     a2, b2, c2, d2, e2, f2, g2, h2,
     a3, b3, c3, d3, e3, f3, g3, h3,
@@ -49,7 +49,7 @@ inline Square operator-=(Square& rhs, uint8_t offset)
     return rhs;
 }
 
-enum PieceSets {
+enum PieceSets : uint8_t {
     whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing,
     blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing,
     whitePieces, blackPieces, allPieces, emptySquares

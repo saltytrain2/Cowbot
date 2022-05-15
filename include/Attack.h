@@ -5,7 +5,7 @@
 
 // magics taken from shallow blue https://github.com/GunshipPenguin/shallow-blue
 // TODO create custom magics
-const uint64_t ROOK_MAGICS[64] = {
+constexpr uint64_t ROOK_MAGICS[64] = {
     0xa8002c000108020ULL, 0x6c00049b0002001ULL, 0x100200010090040ULL, 0x2480041000800801ULL, 0x280028004000800ULL,
     0x900410008040022ULL, 0x280020001001080ULL, 0x2880002041000080ULL, 0xa000800080400034ULL, 0x4808020004000ULL,
     0x2290802004801000ULL, 0x411000d00100020ULL, 0x402800800040080ULL, 0xb000401004208ULL, 0x2409000100040200ULL,
@@ -21,7 +21,7 @@ const uint64_t ROOK_MAGICS[64] = {
     0x489a000810200402ULL, 0x1004400080a13ULL, 0x4000011008020084ULL, 0x26002114058042ULL
 };
 
-const uint64_t BISHOP_MAGICS[64] = {
+constexpr uint64_t BISHOP_MAGICS[64] = {
     0x89a1121896040240ULL, 0x2004844802002010ULL, 0x2068080051921000ULL, 0x62880a0220200808ULL, 0x4042004000000ULL,
     0x100822020200011ULL, 0xc00444222012000aULL, 0x28808801216001ULL, 0x400492088408100ULL, 0x201c401040c0084ULL,
     0x840800910a0010ULL, 0x82080240060ULL, 0x2000840504006000ULL, 0x30010c4108405004ULL, 0x1008005410080802ULL,
@@ -37,6 +37,28 @@ const uint64_t BISHOP_MAGICS[64] = {
     0x1000042304105ULL, 0x10008830412a00ULL, 0x2520081090008908ULL, 0x40102000a0a60140ULL,
 };
 
+constexpr uint8_t BISHOP_SHIFTS[64] = {
+    6, 5, 5, 5, 5, 5, 5, 6,
+    5, 5, 5, 5, 5, 5, 5, 5,
+    5, 5, 7, 7, 7, 7, 5, 5,
+    5, 5, 7, 9, 9, 7, 5, 5,
+    5, 5, 7, 9, 9, 7, 5, 5,
+    5, 5, 7, 7, 7, 7, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5,
+    6, 5, 5, 5, 5, 5, 5, 6
+};
+
+constexpr uint8_t ROOK_SHIFTS[64] = {
+    12, 11, 11, 11, 11, 11, 11, 12,
+    11, 10, 10, 10, 10, 10, 10, 11,
+    11, 10, 10, 10, 10, 10, 10, 11,
+    11, 10, 10, 10, 10, 10, 10, 11,
+    11, 10, 10, 10, 10, 10, 10, 11,
+    11, 10, 10, 10, 10, 10, 10, 11,
+    11, 10, 10, 10, 10, 10, 10, 11,
+    12, 11, 11, 11, 11, 11, 11, 12
+};
+
 class Attack
 {
 public:
@@ -47,26 +69,33 @@ public:
 
     Bitboard getKingAttacks(Square sq);
     Bitboard getKnightAttacks(Square sq);
-    Bitboard getBishopAttacks(Bitboard blockers, Square sq);
-    Bitboard getRookAttacks(Bitboard blockers, Square sq);
-    Bitboard getQueenAttacks(Bitboard blockers, Square sq);
+    Bitboard getBishopAttacks(Square sq, Bitboard blockers);
+    Bitboard getRookAttacks(Square sq, Bitboard blockers);
+    Bitboard getQueenAttacks(Square sq, Bitboard blockers);
+
+    // debugging functions
+    Bitboard getBishopMasks(Square sq);
+    Bitboard getRookMasks(Square sq);
 private:
-    struct Magics {
-        uint64_t mask;
-        uint64_t magic;
-    };
-    Magics mBishopMagics[64];
-    Magics mRookMagics[64];
+    // masks for each square on the board
+    Bitboard mBishopMasks[64];
+    Bitboard mRookMasks[64];
 
     // Lookup tables of all attacks possible by each piece
-    // Bishop and Rook Lookup Tables are done using Magic Bitboards
+    // Bishop and Rook Lookup Tables are done using Basic Magic Bitboards
     // Queen Lookup Table is the xor of Bishop and Rook
-    Bitboard mBishopRookAttacks[107520];
     Bitboard mKingAttacks[64];
     Bitboard mKnightAttacks[64];
     Bitboard mBishopAttacks[64][512];
     Bitboard mRookAttacks[64][4096];
 
-    Bitboard kingAttacks(Bitboard kingLoc);
-    Bitboard knightAttacks(Bitboard knightLoc);
+    Bitboard getMaskedBlockers(Bitboard mask, uint16_t index);
+
+    Bitboard calcKingAttacks(Bitboard kingLoc);
+    Bitboard calcKnightAttacks(Bitboard knightLoc);
+
+    void initKingAttacks();
+    void initKnightAttacks();
+    void initBishopAttacks();
+    void initRookAttacks();
 };
