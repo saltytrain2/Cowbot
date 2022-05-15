@@ -6,6 +6,3 @@ set(LIBRARY_FILES
 
 add_library(ChessEngine ${LIBRARY_FILES})
 target_include_directories(ChessEngine PUBLIC ../include)
-
-add_executable(driver main.cpp)
-target_link_libraries(driver PRIVATE ChessEngine)

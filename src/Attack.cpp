@@ -22,7 +22,7 @@ Bitboard Attack::getMaskedBlockers(Bitboard mask, uint16_t index)
         if (index & 1) {
             blockers |= Bitboard(1) << shift;
         }
-        mask >>= (mask - 1);
+        mask &= --mask;
         index >>= 1;
     }
     return blockers;
@@ -53,20 +53,32 @@ void Attack::initBishopAttacks()
         uint16_t permutations = uint16_t(1) << BISHOP_SHIFTS[i];
 
         for (uint16_t j = 0; j < permutations; ++j) {
-            Bitboard blockers = getMaskedBlockers(mask, permutations);
+            Bitboard blockers = getMaskedBlockers(mask, j);
             Bitboard attacks = 0;
             
-            for (Square k = SquareBitboardUtils::northeastOne(i); k != null && !(blockers & 1 << k); k = SquareBitboardUtils::northeastOne(k)) {
+            for (Square k = SquareBitboardUtils::northeastOne(i); k != null; k = SquareBitboardUtils::northeastOne(k)) {
                 attacks |= Bitboard(1) << k;
+                if (blockers & Bitboard(1) << k) {
+                    break;
+                }
             }
-            for (Square k = SquareBitboardUtils::northwestOne(i); k != null && !(blockers & 1 << k); k = SquareBitboardUtils::northwestOne(k)) {
+            for (Square k = SquareBitboardUtils::northwestOne(i); k != null; k = SquareBitboardUtils::northwestOne(k)) {
                 attacks |= Bitboard(1) << k;
+                if (blockers & Bitboard(1) << k) {
+                    break;
+                }
             }
-            for (Square k = SquareBitboardUtils::southeastOne(i); k != null && !(blockers & 1 << k); k = SquareBitboardUtils::southeastOne(k)) {
+            for (Square k = SquareBitboardUtils::southeastOne(i); k != null; k = SquareBitboardUtils::southeastOne(k)) {
                 attacks |= Bitboard(1) << k;
+                if (blockers & Bitboard(1) << k) {
+                    break;
+                }
             }
-            for (Square k = SquareBitboardUtils::southwestOne(i); k != null && !(blockers & 1 << k); k = SquareBitboardUtils::southwestOne(k)) {
+            for (Square k = SquareBitboardUtils::southwestOne(i); k != null; k = SquareBitboardUtils::southwestOne(k)) {
                 attacks |= Bitboard(1) << k;
+                if (blockers & Bitboard(1) << k) {
+                    break;
+                }
             }
             uint16_t magicIndex = (blockers * BISHOP_MAGICS[i]) >> (64 - BISHOP_SHIFTS[i]);
             mBishopAttacks[i][magicIndex] = attacks;
@@ -82,20 +94,32 @@ void Attack::initRookAttacks()
         uint16_t permutations = 1 << ROOK_SHIFTS[i];
 
         for (uint16_t j = 0; j < permutations; ++j) {
-            Bitboard blockers = getMaskedBlockers(mask, permutations);
+            Bitboard blockers = getMaskedBlockers(mask, j);
             Bitboard attacks = 0;
             
-            for (Square k = SquareBitboardUtils::northOne(i); k != null && !(blockers & 1 << k); k = SquareBitboardUtils::northOne(k)) {
+            for (Square k = SquareBitboardUtils::northOne(i); k != null; k = SquareBitboardUtils::northOne(k)) {
                 attacks |= Bitboard(1) << k;
+                if (blockers & Bitboard(1) << k) {
+                    break;
+                }
             }
-            for (Square k = SquareBitboardUtils::westOne(i); k != null && !(blockers & 1 << k); k = SquareBitboardUtils::westOne(k)) {
+            for (Square k = SquareBitboardUtils::westOne(i); k != null; k = SquareBitboardUtils::westOne(k)) {
                 attacks |= Bitboard(1) << k;
+                if (blockers & Bitboard(1) << k) {
+                    break;
+                }
             }
-            for (Square k = SquareBitboardUtils::eastOne(i); k != null && !(blockers & 1 << k); k = SquareBitboardUtils::eastOne(k)) {
+            for (Square k = SquareBitboardUtils::eastOne(i); k != null; k = SquareBitboardUtils::eastOne(k)) {
                 attacks |= Bitboard(1) << k;
+                if (blockers & Bitboard(1) << k) {
+                    break;
+                }
             }
-            for (Square k = SquareBitboardUtils::southOne(i); k != null && !(blockers & 1 << k); k = SquareBitboardUtils::southOne(k)) {
+            for (Square k = SquareBitboardUtils::southOne(i); k != null; k = SquareBitboardUtils::southOne(k)) {
                 attacks |= Bitboard(1) << k;
+                if (blockers & Bitboard(1) << k) {
+                    break;
+                }
             }
             uint16_t magicIndex = (blockers * ROOK_MAGICS[i]) >> (64 - ROOK_SHIFTS[i]);
             mRookAttacks[i][magicIndex] = attacks;
