@@ -1,4 +1,6 @@
 #include "Attack.h"
+#include <cassert>
+#include <iostream>
 
 Attack::Attack()
 {
@@ -22,7 +24,7 @@ Bitboard Attack::getMaskedBlockers(Bitboard mask, uint16_t index)
         if (index & 1) {
             blockers |= Bitboard(1) << shift;
         }
-        mask &= --mask;
+        mask &= (mask - 1);
         index >>= 1;
     }
     return blockers;
@@ -49,7 +51,7 @@ void Attack::initKnightAttacks()
 void Attack::initBishopAttacks()
 {
     for (Square i = a1; i < null; ++i) {
-        Bitboard mask = SquareBitboardUtils::slidingAttack(whiteBishops, a1) & SquareBitboardUtils::NOT_EDGES;
+        Bitboard mask = SquareBitboardUtils::slidingMasks(whiteBishops, i);
         uint16_t permutations = uint16_t(1) << BISHOP_SHIFTS[i];
 
         for (uint16_t j = 0; j < permutations; ++j) {
@@ -90,7 +92,7 @@ void Attack::initBishopAttacks()
 void Attack::initRookAttacks()
 {
     for (Square i = a1; i < null; ++i) {
-        Bitboard mask = SquareBitboardUtils::slidingAttack(whiteRooks, a1);
+        Bitboard mask = SquareBitboardUtils::slidingMasks(whiteRooks, i);
         uint16_t permutations = 1 << ROOK_SHIFTS[i];
 
         for (uint16_t j = 0; j < permutations; ++j) {

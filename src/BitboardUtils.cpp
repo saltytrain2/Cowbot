@@ -45,7 +45,7 @@ Bitboard SquareBitboardUtils::getBitboard(Square sq)
     return Bitboard(1) << sq;
 }
 
-Bitboard SquareBitboardUtils::slidingAttack(PieceSets piece, Square sq)
+Bitboard SquareBitboardUtils::slidingMasks(PieceSets piece, Square sq)
 {
     Bitboard attacks = 0;
 
@@ -62,18 +62,27 @@ Bitboard SquareBitboardUtils::slidingAttack(PieceSets piece, Square sq)
         for (Square i = southwestOne(sq); i != null; i = southwestOne(i)) {
             attacks |= Bitboard(1) << i;
         }
+        attacks &= NOT_EDGES;
     } else if (piece == whiteRooks) {
-        for (Square i = northOne(sq); i != null; i = northOne(i)) {
+        Square i = northOne(sq);
+        while (i != null && northOne(i) != null) {
             attacks |= Bitboard(1) << i;
+            i = northOne(i);
         }
-        for (Square i = westOne(sq); i != null; i = westOne(i)) {
+        i = southOne(sq);
+        while (i != null && southOne(i) != null) {
             attacks |= Bitboard(1) << i;
+            i = southOne(i);
         }
-        for (Square i = eastOne(sq); i != null; i = eastOne(i)) {
+        i = westOne(sq);
+        while (i != null && westOne(i) != null) {
             attacks |= Bitboard(1) << i;
+            i = westOne(i);
         }
-        for (Square i = southOne(sq); i != null; i = southOne(i)) {
+        i = eastOne(sq);
+        while (i != null && eastOne(i) != null) {
             attacks |= Bitboard(1) << i;
+            i = eastOne(i);
         }
     }
     return attacks;
@@ -118,7 +127,7 @@ Square SquareBitboardUtils::westOne(Square sq)
 
 Square SquareBitboardUtils::northOne(Square sq)
 {
-    return getSquare(westOne(getBitboard(sq)));
+    return getSquare(northOne(getBitboard(sq)));
 }
 
 Square SquareBitboardUtils::southOne(Square sq)

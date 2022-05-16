@@ -25,8 +25,13 @@ TEST_CASE("Attack Bitboards") {
     }
 
     SUBCASE("Bishop Bitboards") {
-        Bitboard blockers = 0xFC40000;
-        CHECK(attackBoards.getBishopAttacks(a1, blockers) == 0x40200);
-        CHECK(attackBoards.getBishopMasks(a1) == 0x40201008040200);
+        CHECK(attackBoards.getBishopAttacks(a1, 0xFC40000) == 0x40200);
+        CHECK(attackBoards.getBishopAttacks(a1, 0) == 0x8040201008040200);
+        CHECK(attackBoards.getBishopAttacks(d4, 0x67008001E01) == 0x21400142240); 
+        CHECK(attackBoards.getBishopAttacks(d4, 0x2467000001E41) == 0x21400142240);
+        CHECK(attackBoards.getBishopAttacks(c4, 0xBBE728005426E391) == 0x20110A000A1020);
+        CHECK(attackBoards.getBishopAttacks(b2, 0xBBE728005426E391) == 0x50005);
+        CHECK(attackBoards.getBishopAttacks(g4, 0xBBE728005426E391) == 0x40810A000A00000);
+        CHECK(attackBoards.getBishopAttacks(f8, 0xBBE728005426E391) == 0x50080000000000);
     }
 }

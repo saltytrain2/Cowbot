@@ -19,7 +19,7 @@ uint8_t getTrailingZeros(Bitboard src);
 
 // should only be called for initialization of masks
 // assumes an empty occupancy grid
-Bitboard slidingAttack(PieceSets piece, Square sq);
+Bitboard slidingMasks(PieceSets piece, Square sq);
 
 Square getSquare(Bitboard loc);
 
