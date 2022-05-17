@@ -191,9 +191,9 @@ void ChessBoard::updateBitboards(const std::vector<std::string>& piecesByRank) n
 
 void ChessBoard::updateRedundantBitboards() noexcept
 {
-    mPieceBB[whitePieces] = mPieceBB[whitePawns] & mPieceBB[whiteKnights] & mPieceBB[whiteBishops] & mPieceBB[whiteRooks] & mPieceBB[whiteQueens] & mPieceBB[whiteKing];
-    mPieceBB[blackPieces] = mPieceBB[blackPawns] & mPieceBB[blackKnights] & mPieceBB[blackBishops] & mPieceBB[blackRooks] & mPieceBB[blackQueens] & mPieceBB[blackKing];
-    mPieceBB[allPieces] = mPieceBB[whitePieces] & mPieceBB[blackPieces];
+    mPieceBB[whitePieces] = mPieceBB[whitePawns] | mPieceBB[whiteKnights] | mPieceBB[whiteBishops] | mPieceBB[whiteRooks] | mPieceBB[whiteQueens] | mPieceBB[whiteKing];
+    mPieceBB[blackPieces] = mPieceBB[blackPawns] | mPieceBB[blackKnights] | mPieceBB[blackBishops] | mPieceBB[blackRooks] | mPieceBB[blackQueens] | mPieceBB[blackKing];
+    mPieceBB[allPieces] = mPieceBB[whitePieces] | mPieceBB[blackPieces];
     mPieceBB[emptySquares] = ~mPieceBB[allPieces];
 }
 

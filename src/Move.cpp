@@ -9,6 +9,10 @@ Move::Move(Bitmove src) : mMove(src)
 {
 }
 
+Move::Move(Square startSquare, Square endSquare) : mMove(startSquare | (endSquare << 6)), mCapturedPiece(emptySquares)
+{
+}
+
 void Move::updateMove(std::string lan)
 {
     Bitmove newMove = 0;

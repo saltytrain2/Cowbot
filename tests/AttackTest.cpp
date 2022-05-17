@@ -34,4 +34,16 @@ TEST_CASE("Attack Bitboards") {
         CHECK(attackBoards.getBishopAttacks(g4, 0xBBE728005426E391) == 0x40810A000A00000);
         CHECK(attackBoards.getBishopAttacks(f8, 0xBBE728005426E391) == 0x50080000000000);
     }
+
+    SUBCASE("Rook Bitboards") {
+        CHECK(attackBoards.getRookAttacks(a1, 0xBBE728005426E391) == 0x11E);
+        CHECK(attackBoards.getRookAttacks(h1, 0xBBE728005426E391) == 0x8070);
+        CHECK(attackBoards.getRookAttacks(h8, 0xBBE728005426E391) == 0x6080000000000000);
+        CHECK(attackBoards.getRookAttacks(a8, 0xBBE728005426E391) == 0x201000000000000);
+    }
+
+    SUBCASE("Queen Bitboards") {
+        CHECK(attackBoards.getQueenAttacks(b3, 0xBBE728005426E391) == 0x2020207050708);
+        CHECK(attackBoards.getQueenAttacks(d8, 0xBBE728005426E391) == 0x161C280000000000);
+    }
 }

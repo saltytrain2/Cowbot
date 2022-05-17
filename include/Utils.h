@@ -1,11 +1,17 @@
+#pragma once
+
 #include "types.h"
 
-namespace SquareBitboardUtils {
+namespace Utils {
+constexpr Bitboard SECOND_RANK = 0xFF00;
+constexpr Bitboard THIRD_RANK = 0xFF0000;
+constexpr Bitboard SIXTH_RANK = 0xFF0000000000;
 constexpr Bitboard NOT_A_FILE = 0xFEFEFEFEFEFEFEFE;
 constexpr Bitboard NOT_H_FILE = 0x7F7F7F7F7F7F7F7F;
 constexpr Bitboard EDGES = 0xFF818181818181FF;
 constexpr Bitboard NOT_EDGES = ~EDGES;
 
+// Bitboard operations
 Bitboard eastOne(Bitboard pieceLoc);
 Bitboard westOne(Bitboard pieceLoc);
 Bitboard northOne(Bitboard pieceLoc);
@@ -15,14 +21,13 @@ Bitboard northwestOne(Bitboard pieceLoc);
 Bitboard southeastOne(Bitboard pieceLoc);
 Bitboard southwestOne(Bitboard pieceLoc);
 Bitboard getBitboard(Square sq);
+Square popLSB(Bitboard& pieceLocs);
 uint8_t getTrailingZeros(Bitboard src);
 
-// should only be called for initialization of masks
-// assumes an empty occupancy grid
-Bitboard slidingMasks(PieceSets piece, Square sq);
 
+// Square operations
+// function assumes only one hot location
 Square getSquare(Bitboard loc);
-
 Square eastOne(Square sq);
 Square westOne(Square sq);
 Square northOne(Square sq);
