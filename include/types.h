@@ -79,3 +79,7 @@ enum PieceValues {
     queen = 900,
     king = 100000
 };
+
+enum MoveType : uint8_t {
+    QUIET, CASTLE, PROMOTION, ENPASSANT
+};

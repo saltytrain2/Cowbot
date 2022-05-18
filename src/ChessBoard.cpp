@@ -307,3 +307,9 @@ void ChessBoard::undoMove()
     updateSquareBoard();
     mMoveList.pop_back();
 }
+
+bool ChessBoard::isLegal(const Move& nextMove)
+{
+    MoveType type = MoveType(nextMove.getMove() >> 14);
+    return true;
+}

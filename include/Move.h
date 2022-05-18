@@ -9,7 +9,7 @@ class Move
 public:
     explicit Move(std::string lan);
     explicit Move(Bitmove src);
-    Move(Square startSquare, Square endSquare);
+    Move(Square startSquare, Square endSquare, MoveType type);
     ~Move() = default;
     Move(const Move& rhs) = default;
     Move& operator=(const Move& rhs) = default;

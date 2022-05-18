@@ -11,7 +11,7 @@ constexpr Square SQUARE_LOOKUP[64] = {
     b4, h5, g2, b5, d3, g4, b2, a4,
     f2, c3, a2, e2, h1, g1, f1, h8
 };
-constexpr Bitboard debruijn64 = 0x03F79D71B4CB0A89;
+constexpr Bitboard DEBRUIJN64 = 0x03F79D71B4CB0A89;
 
 Bitboard Utils::eastOne(Bitboard pieceLoc)
 {
@@ -60,21 +60,12 @@ Bitboard Utils::getBitboard(Square sq)
 
 uint8_t Utils::getTrailingZeros(Bitboard src)
 {
-    uint8_t count = 0;
-    while (!(src & 1)) {
-        ++count;
-        src >>= 1;
-    }
-    return count;
+    return popLSB(src);
 }
 
 Square Utils::getSquare(Bitboard loc)
 {
-    if (loc == 0) {
-        return null;
-    }
-
-    return SQUARE_LOOKUP[((loc ^ (loc - 1)) * debruijn64) >> 58];
+    return loc == 0 ? null : SQUARE_LOOKUP[((loc ^ (loc - 1)) * DEBRUIJN64) >> 58];
 }
 
 Square Utils::eastOne(Square sq)
@@ -119,7 +110,7 @@ Square Utils::southwestOne(Square sq)
 
 Square Utils::popLSB(Bitboard& pieceLocs)
 {
-    uint8_t index = ((pieceLocs ^ (pieceLocs - 1)) * debruijn64) >> 58;
+    uint8_t index = ((pieceLocs ^ (pieceLocs - 1)) * DEBRUIJN64) >> 58;
     pieceLocs &= pieceLocs - 1;
     return SQUARE_LOOKUP[index];
 }

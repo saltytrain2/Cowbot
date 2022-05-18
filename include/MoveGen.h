@@ -23,7 +23,10 @@ private:
     Attack* mAttack;
     std::vector<Move> mMoves;
     ChessBoard mBoard;
+    Bitboard mPinnedPieces;
+    Bitboard mKingAttackers;
 
+    // Psuedo Legal Move Generation
     void generatePseudoLegalPawnMoves();
     void generatePseudoLegalWhitePawnMoves();
     void generatePseudoLegalBlackPawnMoves();
@@ -32,4 +35,16 @@ private:
     void generatePseudoLegalRookMoves();
     void generatePseudoLegalQueenMoves();
     void generatePseudoLegalKingMoves();
+
+    // Legal Move Generation
+    void generateLegalPawnMoves();
+    void generateLegalWhitePawnMoves();
+    void generateLegalBlackPawnMoves();
+    void generateLegalKnightMoves();
+    void generateLegalBishopMoves();
+    void generateLegalRookMoves();
+    void generateLegalQueenMoves();
+    void generateLegalKingMoves();
+
+    bool isLegal();
 };

@@ -3,9 +3,11 @@
 #include "types.h"
 
 namespace Utils {
+constexpr Bitboard FIRST_RANK = 0xFF;
 constexpr Bitboard SECOND_RANK = 0xFF00;
 constexpr Bitboard THIRD_RANK = 0xFF0000;
 constexpr Bitboard SIXTH_RANK = 0xFF0000000000;
+constexpr Bitboard EIGHTH_RANK = 0xFF00000000000000;
 constexpr Bitboard NOT_A_FILE = 0xFEFEFEFEFEFEFEFE;
 constexpr Bitboard NOT_H_FILE = 0x7F7F7F7F7F7F7F7F;
 constexpr Bitboard EDGES = 0xFF818181818181FF;

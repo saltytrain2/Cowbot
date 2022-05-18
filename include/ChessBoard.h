@@ -65,7 +65,6 @@ public:
     void updateSquareBoard() noexcept;
 
 
-
 private:
     // buffer to store all bitboards describing the board state
     // boards 0-5 describe individual white pieces ordered from pawn, knight ... queen, king
