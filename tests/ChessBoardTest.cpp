@@ -1,14 +1,17 @@
 #include "doctest.h"
 
+#include <memory>
 #include "ChessBoard.h"
+#include "Attack.h"
 
 TEST_CASE("standard game") {
-    ChessBoard board;
-    CHECK(board.getTurn() == white);
-    CHECK(board.getWhiteCastleRights(kingside) == true);
-    CHECK(board.getWhiteCastleRights(queenside) == true);
-    CHECK(board.getBlackCastleRights(kingside) == true);
-    CHECK(board.getBlackCastleRights(queenside) == true);
+    auto attack = std::shared_ptr<Attack>();
+    ChessBoard board(attack.get());
+    CHECK(board.getTurn() == Color::White);
+    CHECK(board.getWhiteCastleRights(Castling::Kingside) == true);
+    CHECK(board.getWhiteCastleRights(Castling::Queenside) == true);
+    CHECK(board.getBlackCastleRights(Castling::Kingside) == true);
+    CHECK(board.getBlackCastleRights(Castling::Queenside) == true);
     CHECK(board.getWhitePawns() == 0xFF00);
     CHECK(board.getWhiteKnights() == 0x42);
     CHECK(board.getWhiteBishops() == 0x24);
@@ -40,7 +43,7 @@ TEST_CASE("standard game") {
         CHECK(board.getBlackPawns() == 0xEF001000000000);
         CHECK(board.getMoveList().size() == 2);
         CHECK(board.getMoveList().back().getMove() == 0x934);
-        CHECK(board.getMoveList().back().getCapturedPiece() == emptySquares);
+        CHECK(board.getMoveList().back().getCapturedPiece() == PieceSets::EmptySquares);
         move.updateMove("g1f3");
         board.makeMove(move);
         move.updateMove("b8c6");

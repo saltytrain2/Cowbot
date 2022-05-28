@@ -27,24 +27,28 @@ private:
     Bitboard mKingAttackers;
 
     // Psuedo Legal Move Generation
-    void generatePseudoLegalPawnMoves();
+    void generatePseudoLegalPawnMoves(Color color);
     void generatePseudoLegalWhitePawnMoves();
     void generatePseudoLegalBlackPawnMoves();
-    void generatePseudoLegalKnightMoves();
-    void generatePseudoLegalBishopMoves();
-    void generatePseudoLegalRookMoves();
-    void generatePseudoLegalQueenMoves();
-    void generatePseudoLegalKingMoves();
+    void generatePseudoLegalKnightMoves(Color color);
+    void generatePseudoLegalBishopMoves(Color color);
+    void generatePseudoLegalRookMoves(Color color);
+    void generatePseudoLegalQueenMoves(Color color);
+    void generatePseudoLegalKingMoves(Color color);
 
     // Legal Move Generation
-    void generateLegalPawnMoves();
+    void generateLegalPawnMoves(Color color);
     void generateLegalWhitePawnMoves();
     void generateLegalBlackPawnMoves();
-    void generateLegalKnightMoves();
-    void generateLegalBishopMoves();
-    void generateLegalRookMoves();
-    void generateLegalQueenMoves();
-    void generateLegalKingMoves();
+    void generateLegalKnightMoves(Color color);
+    void generateLegalBishopMoves(Color color);
+    void generateLegalRookMoves(Color color);
+    void generateLegalQueenMoves(Color color);
+    void generateLegalKingMoves(Color color);
 
-    bool isLegal();
+    bool isLegal(const Move& move, Color color);
+    bool legalPinnedMove(Bitboard startLoc, Bitboard endLoc, Bitboard blockers);
+    bool isSquareUnderAttack(Square sq, Color color, Bitboard blockers);
+    Bitboard getWhiteAttacks(Bitboard blockers);
+    Bitboard getBlackAttacks(Bitboard blockers);
 };

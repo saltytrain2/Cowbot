@@ -60,11 +60,6 @@ constexpr uint8_t ROOK_SHIFTS[64] = {
 
 Attack::Attack()
 {
-    for (int i = 0; i < 64; ++i) {
-        for (int j = 0; j < 512; ++j) {
-            mBishopAttacks[i][j] = 69;
-        }
-    }
     initPawnAttacks();
     initKingAttacks();
     initKnightAttacks();
@@ -89,15 +84,9 @@ Bitboard Attack::getMaskedBlockers(Bitboard mask, uint16_t index)
 
 void Attack::initPawnAttacks()
 {
-    for (Square i = a1; i < null; ++i) {
-        // should never be a pawn on the first or eight ranks
-        if (i < a2 || i > h7) {
-            mPawnAttacks[white][i] = 0;
-            mPawnAttacks[black][i] = 0;
-        } else {
-            mPawnAttacks[white][i] = (Bitboard(1) << Utils::northeastOne(i)) | (Bitboard(1) << Utils::northwestOne(i));
-            mPawnAttacks[black][i] = (Bitboard(1) << Utils::southeastOne(i)) | (Bitboard(1) << Utils::southwestOne(i));
-        }
+    for (Square i = Square::A1; i < Square::Null; ++i) {
+        mPawnAttacks[to_int(Color::White)][to_int(i)] = (Utils::northeastOne(Utils::getBitboard(i))) | (Utils::northwestOne(Utils::getBitboard(i)));
+        mPawnAttacks[to_int(Color::Black)][to_int(i)] = (Utils::southeastOne(Utils::getBitboard(i))) | (Utils::southwestOne(Utils::getBitboard(i)));
     }
 }
 
@@ -105,8 +94,8 @@ void Attack::initKingAttacks()
 {
     Bitboard board = 1;
 
-    for (Square i = a1; i < null; ++i, board <<= 1) {
-        mKingAttacks[i] = calcKingAttacks(board);
+    for (Square i = Square::A1; i < Square::Null; ++i, board <<= 1) {
+        mKingAttacks[to_int(i)] = calcKingAttacks(board);
     }
 }
 
@@ -114,72 +103,72 @@ void Attack::initKnightAttacks()
 {
     Bitboard board = 1;
 
-    for (Square i = a1; i < null; ++i, board <<= 1) {
-        mKnightAttacks[i] = calcKnightAttacks(board);
+    for (Square i = Square::A1; i < Square::Null; ++i, board <<= 1) {
+        mKnightAttacks[to_int(i)] = calcKnightAttacks(board);
     }
 }
 
 void Attack::initBishopAttacks()
 {
-    for (Square i = a1; i < null; ++i) {
-        Bitboard mask = getSlidingMasks(whiteBishops, i);
-        uint16_t permutations = uint16_t(1) << BISHOP_SHIFTS[i];
+    for (Square i = Square::A1; i < Square::Null; ++i) {
+        Bitboard mask = getSlidingMasks(PieceSets::WhiteBishops, i);
+        uint16_t permutations = uint16_t(1) << BISHOP_SHIFTS[to_int(i)];
 
         for (uint16_t j = 0; j < permutations; ++j) {
             Bitboard blockers = getMaskedBlockers(mask, j);
             Bitboard attacks = calcBishopAttacks(i, blockers);
-            uint16_t magicIndex = (blockers * BISHOP_MAGICS[i]) >> (64 - BISHOP_SHIFTS[i]);
-            mBishopAttacks[i][magicIndex] = attacks;
+            uint16_t magicIndex = (blockers * BISHOP_MAGICS[to_int(i)]) >> (64 - BISHOP_SHIFTS[to_int(i)]);
+            mBishopAttacks[to_int(i)][magicIndex] = attacks;
         }
-        mBishopMasks[i] = mask;
+        mBishopMasks[to_int(i)] = mask;
     }
 }
 
 void Attack::initRookAttacks()
 {
-    for (Square i = a1; i < null; ++i) {
-        Bitboard mask = getSlidingMasks(whiteRooks, i);
-        uint16_t permutations = 1 << ROOK_SHIFTS[i];
+    for (Square i = Square::A1; i < Square::Null; ++i) {
+        Bitboard mask = getSlidingMasks(PieceSets::WhiteRooks, i);
+        uint16_t permutations = 1 << ROOK_SHIFTS[to_int(i)];
 
         for (uint16_t j = 0; j < permutations; ++j) {
             Bitboard blockers = getMaskedBlockers(mask, j);
             Bitboard attacks = calcRookAttacks(i, blockers);
-            uint16_t magicIndex = (blockers * ROOK_MAGICS[i]) >> (64 - ROOK_SHIFTS[i]);
-            mRookAttacks[i][magicIndex] = attacks;
+            uint16_t magicIndex = (blockers * ROOK_MAGICS[to_int(i)]) >> (64 - ROOK_SHIFTS[to_int(i)]);
+            mRookAttacks[to_int(i)][magicIndex] = attacks;
         }
-        mRookMasks[i] = mask;
+        mRookMasks[to_int(i)] = mask;
     }
 }
 
 Bitboard Attack::getPawnAttacks(Square sq, Color color)
 {
-    return mPawnAttacks[color][sq - a2];
+    return mPawnAttacks[to_int(color)][to_int(sq)];
 }
 
 Bitboard Attack::getKingAttacks(Square sq)
 {
-    return mKingAttacks[sq];
+    return mKingAttacks[to_int(sq)];
 }
 
 Bitboard Attack::getKnightAttacks(Square sq)
 {
-    return mKnightAttacks[sq];
+    return mKnightAttacks[to_int(sq)];
 }
 
 Bitboard Attack::getBishopAttacks(Square sq, Bitboard blockers)
 {
-    blockers &= mBishopMasks[sq];
-    blockers *= BISHOP_MAGICS[sq];
-    blockers >>= 64 - BISHOP_SHIFTS[sq];
-    return mBishopAttacks[sq][blockers];
+    blockers &= mBishopMasks[to_int(sq)];
+    blockers *= BISHOP_MAGICS[to_int(sq)];
+    blockers >>= 64 - BISHOP_SHIFTS[to_int(sq)];
+    return mBishopAttacks[to_int(sq)][blockers];
 }
 
 Bitboard Attack::getRookAttacks(Square sq, Bitboard blockers)
 {
-    blockers &= mRookMasks[sq];
-    blockers *= ROOK_MAGICS[sq];
-    blockers >>= 64 - ROOK_SHIFTS[sq];
-    return mRookAttacks[sq][blockers];
+    blockers &= mRookMasks[to_int(sq)];
+    blockers *= ROOK_MAGICS[to_int(sq)];
+    blockers >>= 64 - ROOK_SHIFTS[to_int(sq)];
+    return mRookAttacks[to_int(sq)][blockers];
 }
 
 Bitboard Attack::getQueenAttacks(Square sq, Bitboard blockers)
@@ -208,51 +197,51 @@ Bitboard Attack::calcKnightAttacks(Bitboard knightLoc)
 
 Bitboard Attack::getBishopMasks(Square sq)
 {
-    return mBishopMasks[sq];
+    return mBishopMasks[to_int(sq)];
 }
 
 Bitboard Attack::getRookMasks(Square sq)
 {
-    return mRookMasks[sq];
+    return mRookMasks[to_int(sq)];
 }
 
 Bitboard Attack::getSlidingMasks(PieceSets piece, Square sq)
 {
     Bitboard attacks = 0;
 
-    if (piece == whiteBishops) {
-        for (Square i = Utils::northeastOne(sq); i != null; i = Utils::northeastOne(i)) {
-            attacks |= Bitboard(1) << i;
+    if (piece == PieceSets::WhiteBishops) {
+        for (Square i = Utils::northeastOne(sq); i != Square::Null; i = Utils::northeastOne(i)) {
+            attacks |= Utils::getBitboard(i);
         }
-        for (Square i = Utils::northwestOne(sq); i != null; i = Utils::northwestOne(i)) {
-            attacks |= Bitboard(1) << i;
+        for (Square i = Utils::northwestOne(sq); i != Square::Null; i = Utils::northwestOne(i)) {
+            attacks |= Utils::getBitboard(i);
         }
-        for (Square i = Utils::southeastOne(sq); i != null; i = Utils::southeastOne(i)) {
-            attacks |= Bitboard(1) << i;
+        for (Square i = Utils::southeastOne(sq); i != Square::Null; i = Utils::southeastOne(i)) {
+            attacks |= Utils::getBitboard(i);
         }
-        for (Square i = Utils::southwestOne(sq); i != null; i = Utils::southwestOne(i)) {
-            attacks |= Bitboard(1) << i;
+        for (Square i = Utils::southwestOne(sq); i != Square::Null; i = Utils::southwestOne(i)) {
+            attacks |= Utils::getBitboard(i);
         }
         attacks &= Utils::NOT_EDGES;
-    } else if (piece == whiteRooks) {
+    } else if (piece == PieceSets::WhiteRooks) {
         Square i = Utils::northOne(sq);
-        while (i != null && Utils::northOne(i) != null) {
-            attacks |= Bitboard(1) << i;
+        while (i != Square::Null && Utils::northOne(i) != Square::Null) {
+            attacks |= Utils::getBitboard(i);
             i = Utils::northOne(i);
         }
         i = Utils::southOne(sq);
-        while (i != null && Utils::southOne(i) != null) {
-            attacks |= Bitboard(1) << i;
+        while (i != Square::Null && Utils::southOne(i) != Square::Null) {
+            attacks |= Utils::getBitboard(i);
             i = Utils::southOne(i);
         }
         i = Utils::westOne(sq);
-        while (i != null && Utils::westOne(i) != null) {
-            attacks |= Bitboard(1) << i;
+        while (i != Square::Null && Utils::westOne(i) != Square::Null) {
+            attacks |= Utils::getBitboard(i);
             i = Utils::westOne(i);
         }
         i = Utils::eastOne(sq);
-        while (i != null && Utils::eastOne(i) != null) {
-            attacks |= Bitboard(1) << i;
+        while (i != Square::Null && Utils::eastOne(i) != Square::Null) {
+            attacks |= Utils::getBitboard(i);
             i = Utils::eastOne(i);
         }
     }
@@ -263,27 +252,27 @@ Bitboard Attack::calcBishopAttacks(Square sq, Bitboard blockers)
 {
     Bitboard attacks = 0;
 
-    for (Square i = Utils::northeastOne(sq); i != null; i = Utils::northeastOne(i)) {
-        attacks |= Bitboard(1) << i;
-        if (blockers & Bitboard(1) << i) {
+    for (Square i = Utils::northeastOne(sq); i != Square::Null; i = Utils::northeastOne(i)) {
+        attacks |= Utils::getBitboard(i);
+        if (blockers & Utils::getBitboard(i)) {
             break;
         }
     }
-    for (Square i = Utils::northwestOne(sq); i != null; i = Utils::northwestOne(i)) {
-        attacks |= Bitboard(1) << i;
-        if (blockers & Bitboard(1) << i) {
+    for (Square i = Utils::northwestOne(sq); i != Square::Null; i = Utils::northwestOne(i)) {
+        attacks |= Utils::getBitboard(i);
+        if (blockers & Utils::getBitboard(i)) {
             break;
         }
     }
-    for (Square i = Utils::southeastOne(sq); i != null; i = Utils::southeastOne(i)) {
-        attacks |= Bitboard(1) << i;
-        if (blockers & Bitboard(1) << i) {
+    for (Square i = Utils::southeastOne(sq); i != Square::Null; i = Utils::southeastOne(i)) {
+        attacks |= Utils::getBitboard(i);
+        if (blockers & Utils::getBitboard(i)) {
             break;
         }
     }
-    for (Square i = Utils::southwestOne(sq); i != null; i = Utils::southwestOne(i)) {
-        attacks |= Bitboard(1) << i;
-        if (blockers & Bitboard(1) << i) {
+    for (Square i = Utils::southwestOne(sq); i != Square::Null; i = Utils::southwestOne(i)) {
+        attacks |= Utils::getBitboard(i);
+        if (blockers & Utils::getBitboard(i)) {
             break;
         }
     }
@@ -294,27 +283,27 @@ Bitboard Attack::calcRookAttacks(Square sq, Bitboard blockers)
 {
     Bitboard attacks = 0;
 
-    for (Square i = Utils::northOne(sq); i != null; i = Utils::northOne(i)) {
-        attacks |= Bitboard(1) << i;
-        if (blockers & Bitboard(1) << i) {
+    for (Square i = Utils::northOne(sq); i != Square::Null; i = Utils::northOne(i)) {
+        attacks |= Utils::getBitboard(i);
+        if (blockers & Utils::getBitboard(i)) {
             break;
         }
     }
-    for (Square i = Utils::westOne(sq); i != null; i = Utils::westOne(i)) {
-        attacks |= Bitboard(1) << i;
-        if (blockers & Bitboard(1) << i) {
+    for (Square i = Utils::westOne(sq); i != Square::Null; i = Utils::westOne(i)) {
+        attacks |= Utils::getBitboard(i);
+        if (blockers & Utils::getBitboard(i)) {
             break;
         }
     }
-    for (Square i = Utils::eastOne(sq); i != null; i = Utils::eastOne(i)) {
-        attacks |= Bitboard(1) << i;
-        if (blockers & Bitboard(1) << i) {
+    for (Square i = Utils::eastOne(sq); i != Square::Null; i = Utils::eastOne(i)) {
+        attacks |= Utils::getBitboard(i);
+        if (blockers & Utils::getBitboard(i)) {
             break;
         }
     }
-    for (Square i = Utils::southOne(sq); i != null; i = Utils::southOne(i)) {
-        attacks |= Bitboard(1) << i;
-        if (blockers & Bitboard(1) << i) {
+    for (Square i = Utils::southOne(sq); i != Square::Null; i = Utils::southOne(i)) {
+        attacks |= Utils::getBitboard(i);
+        if (blockers & Utils::getBitboard(i)) {
             break;
         }
     }

@@ -7,7 +7,7 @@
 
 TEST_CASE("Move Generation") {
     auto attack = std::make_shared<Attack>();
-    ChessBoard board;
+    ChessBoard board(attack.get());
     SUBCASE("Starting Position") {
         MoveGen moveGenerator(board, attack.get());
         moveGenerator.generatePseudoLegalMoves();

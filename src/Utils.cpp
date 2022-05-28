@@ -2,15 +2,19 @@
 
 // debruijn lookup for determining index of LSB
 constexpr Square SQUARE_LOOKUP[64] = {
-    a1, h6, b1, a8, a7, d4, c1, e8,
-    b8, b7, b6, f5, e4, a3, d1, f8,
-    g7, c8, d5, e7, c7, c6, f3, e6,
-    g5, a5, f4, h3, b3, d2, e1, g8,
-    g6, h7, c4, d8, a6, e5, h2, f7,
-    c5, d7, e3, d6, h4, g3, c2, f6,
-    b4, h5, g2, b5, d3, g4, b2, a4,
-    f2, c3, a2, e2, h1, g1, f1, h8
+    Square::A1, Square::H6, Square::B1, Square::A8, Square::A7, Square::D4, 
+    Square::C1, Square::E8, Square::B8, Square::B7, Square::B6, Square::F5, 
+    Square::E4, Square::A3, Square::D1, Square::F8, Square::G7, Square::C8, 
+    Square::D5, Square::E7, Square::C7, Square::C6, Square::F3, Square::E6,
+    Square::G5, Square::A5, Square::F4, Square::H3, Square::B3, Square::D2, 
+    Square::E1, Square::G8, Square::G6, Square::H7, Square::C4, Square::D8, 
+    Square::A6, Square::E5, Square::H2, Square::F7, Square::C5, Square::D7, 
+    Square::E3, Square::D6, Square::H4, Square::G3, Square::C2, Square::F6,
+    Square::B4, Square::H5, Square::G2, Square::B5, Square::D3, Square::G4, 
+    Square::B2, Square::A4, Square::F2, Square::C3, Square::A2, Square::E2, 
+    Square::H1, Square::G1, Square::F1, Square::H8
 };
+
 constexpr Bitboard DEBRUIJN64 = 0x03F79D71B4CB0A89;
 
 Bitboard Utils::eastOne(Bitboard pieceLoc)
@@ -55,17 +59,17 @@ Bitboard Utils::southeastOne(Bitboard pieceLoc)
 
 Bitboard Utils::getBitboard(Square sq)
 {
-    return Bitboard(1) << sq;
+    return Bitboard(1) << to_int(sq);
 }
 
 uint8_t Utils::getTrailingZeros(Bitboard src)
 {
-    return popLSB(src);
+    return to_int(popLSB(src));
 }
 
 Square Utils::getSquare(Bitboard loc)
 {
-    return loc == 0 ? null : SQUARE_LOOKUP[((loc ^ (loc - 1)) * DEBRUIJN64) >> 58];
+    return loc == 0 ? Square::Null : SQUARE_LOOKUP[((loc ^ (loc - 1)) * DEBRUIJN64) >> 58];
 }
 
 Square Utils::eastOne(Square sq)

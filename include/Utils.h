@@ -4,13 +4,24 @@
 
 namespace Utils {
 constexpr Bitboard FIRST_RANK = 0xFF;
-constexpr Bitboard SECOND_RANK = 0xFF00;
-constexpr Bitboard THIRD_RANK = 0xFF0000;
-constexpr Bitboard SIXTH_RANK = 0xFF0000000000;
-constexpr Bitboard EIGHTH_RANK = 0xFF00000000000000;
-constexpr Bitboard NOT_A_FILE = 0xFEFEFEFEFEFEFEFE;
-constexpr Bitboard NOT_H_FILE = 0x7F7F7F7F7F7F7F7F;
-constexpr Bitboard EDGES = 0xFF818181818181FF;
+constexpr Bitboard SECOND_RANK = FIRST_RANK << 8;
+constexpr Bitboard THIRD_RANK = SECOND_RANK << 8;
+constexpr Bitboard FOURTH_RANK = THIRD_RANK << 8;
+constexpr Bitboard FIFTH_RANK = FOURTH_RANK << 8;
+constexpr Bitboard SIXTH_RANK = FIFTH_RANK << 8;
+constexpr Bitboard SEVENTH_RANK = SIXTH_RANK << 8;
+constexpr Bitboard EIGHTH_RANK = SEVENTH_RANK << 8;
+constexpr Bitboard A_FILE = 0x101010101010101;
+constexpr Bitboard B_FILE = A_FILE << 1;
+constexpr Bitboard C_FILE = B_FILE << 1;
+constexpr Bitboard D_FILE = C_FILE << 1;
+constexpr Bitboard E_FILE = D_FILE << 1;
+constexpr Bitboard F_FILE = E_FILE << 1;
+constexpr Bitboard G_FILE = F_FILE << 1;
+constexpr Bitboard H_FILE = G_FILE << 1;
+constexpr Bitboard NOT_A_FILE = ~A_FILE;
+constexpr Bitboard NOT_H_FILE = ~H_FILE;
+constexpr Bitboard EDGES = A_FILE | H_FILE | FIRST_RANK | EIGHTH_RANK;
 constexpr Bitboard NOT_EDGES = ~EDGES;
 
 // Bitboard operations

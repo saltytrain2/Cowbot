@@ -6,27 +6,31 @@ MoveGen::MoveGen(const ChessBoard& src, Attack* attack) : mAttack(attack), mMove
 
 void MoveGen::generatePseudoLegalMoves()
 {
-    generatePseudoLegalPawnMoves();
-    generatePseudoLegalKnightMoves();
-    generatePseudoLegalBishopMoves();
-    generatePseudoLegalRookMoves();
-    generatePseudoLegalQueenMoves();
-    generatePseudoLegalKingMoves();
+    Color toMove = mBoard.getTurn();
+
+    generatePseudoLegalPawnMoves(toMove);
+    generatePseudoLegalKnightMoves(toMove);
+    generatePseudoLegalBishopMoves(toMove);
+    generatePseudoLegalRookMoves(toMove);
+    generatePseudoLegalQueenMoves(toMove);
+    generatePseudoLegalKingMoves(toMove);
 }
 
 void MoveGen::generateLegalMoves()
 {
-    generateLegalPawnMoves();
-    generateLegalKnightMoves();
-    generateLegalBishopMoves();
-    generateLegalRookMoves();
-    generateLegalQueenMoves();
-    generateLegalKingMoves();
+    Color toMove = mBoard.getTurn();
+
+    generateLegalPawnMoves(toMove);
+    generateLegalKnightMoves(toMove);
+    generateLegalBishopMoves(toMove);
+    generateLegalRookMoves(toMove);
+    generateLegalQueenMoves(toMove);
+    generateLegalKingMoves(toMove);
 }
 
-void MoveGen::generatePseudoLegalPawnMoves()
+void MoveGen::generatePseudoLegalPawnMoves(Color color)
 {
-    mBoard.getTurn() == white ? generatePseudoLegalWhitePawnMoves() : generatePseudoLegalBlackPawnMoves();
+    color == Color::White ? generatePseudoLegalWhitePawnMoves() : generatePseudoLegalBlackPawnMoves();
 }
 
 void MoveGen::generatePseudoLegalWhitePawnMoves()
@@ -39,18 +43,33 @@ void MoveGen::generatePseudoLegalWhitePawnMoves()
     Bitboard twoPawnPush = Utils::northOne(onePawnPush & Utils::THIRD_RANK) & mBoard.getEmptySquares();
     while (onePawnPush) {
         Square endSquare = Utils::popLSB(onePawnPush);
-        mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, QUIET));
+        if (Utils::getBitboard(endSquare) & Utils::EIGHTH_RANK) {
+            mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen));
+            mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Rook));
+            mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Bishop));
+            mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Knight));
+        } else {
+            mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Quiet));
+        }
     }
     while (twoPawnPush) {
         Square endSquare = Utils::popLSB(twoPawnPush);
-        mMoves.push_back(Move(Utils::southOne(Utils::southOne(endSquare)), endSquare, QUIET));
+        mMoves.push_back(Move(Utils::southOne(Utils::southOne(endSquare)), endSquare, MoveType::Quiet));
     }
     while (pawns) {
         Square startSquare = Utils::popLSB(pawns);
-        Bitboard attacks = mAttack->getPawnAttacks(startSquare, white);
+        Bitboard attacks = mAttack->getPawnAttacks(startSquare, Color::White);
         attacks &= enemyPieces;
         while (attacks) {
-            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), QUIET));
+            Square endSquare = Utils::popLSB(attacks);
+            if (Utils::getBitboard(endSquare) & Utils::EIGHTH_RANK) {
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen));
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Rook));
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Bishop));
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Knight));
+            } else {
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Quiet));
+            }
         }
     }
 }
@@ -65,98 +84,96 @@ void MoveGen::generatePseudoLegalBlackPawnMoves()
     Bitboard twoPawnPush = Utils::southOne(onePawnPush & Utils::SIXTH_RANK) & mBoard.getEmptySquares();
     while (onePawnPush) {
         Square endSquare = Utils::popLSB(onePawnPush);
-        mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, QUIET));
+        mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Quiet));
     }
     while (twoPawnPush) {
         Square endSquare = Utils::popLSB(twoPawnPush);
-        mMoves.push_back(Move(Utils::northOne(Utils::northOne(endSquare)), endSquare, QUIET));
+        mMoves.push_back(Move(Utils::northOne(Utils::northOne(endSquare)), endSquare, MoveType::Quiet));
     }
     while (pawns) {
         Square startSquare = Utils::popLSB(pawns);
-        Bitboard attacks = mAttack->getPawnAttacks(startSquare, black);
+        Bitboard attacks = mAttack->getPawnAttacks(startSquare, Color::Black);
         attacks &= enemyPieces;
         while (attacks) {
-            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), QUIET));
+            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), MoveType::Quiet));
         }
     }
 }
 
-void MoveGen::generatePseudoLegalKnightMoves()
+void MoveGen::generatePseudoLegalKnightMoves(Color color)
 {
-    Bitboard knights = mBoard.getTurn() == white ? mBoard.getWhiteKnights() : mBoard.getBlackKnights();
-    Bitboard blockers = mBoard.getTurn() == white ? mBoard.getWhitePieces() : mBoard.getBlackPieces();
+    Bitboard knights = mBoard.getKnights(color);
+    Bitboard blockers = mBoard.getPieces(color);
 
     while (knights) {
         Square startSquare = Utils::popLSB(knights);
         Bitboard attacks = mAttack->getKnightAttacks(startSquare);
         attacks &= ~blockers;
         while (attacks) {
-            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), QUIET));
+            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), MoveType::Quiet));
         }
     }
 }
 
-void MoveGen::generatePseudoLegalBishopMoves()
+void MoveGen::generatePseudoLegalBishopMoves(Color color)
 {
-    Bitboard bishops = mBoard.getTurn() == white ? mBoard.getWhiteBishops() : mBoard.getBlackBishops();
+    Bitboard bishops = mBoard.getBishops(color);
     Bitboard blockers = mBoard.getAllPieces();
-    Bitboard ownPieces = mBoard.getTurn() == white ? mBoard.getWhitePieces() : mBoard.getBlackPieces();
+    Bitboard ownPieces = mBoard.getPieces(color);
 
     while (bishops) {
         Square startSquare = Utils::popLSB(bishops);
         Bitboard attacks = mAttack->getBishopAttacks(startSquare, blockers);
         attacks &= ~ownPieces;
         while (attacks) {
-            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), QUIET));
+            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), MoveType::Quiet));
         }
     }
 }
 
-void MoveGen::generatePseudoLegalRookMoves()
+void MoveGen::generatePseudoLegalRookMoves(Color color)
 {
-    Bitboard rooks = mBoard.getTurn() == white ? mBoard.getWhiteRooks() : mBoard.getBlackRooks();
+    Bitboard rooks = mBoard.getRooks(color);
     Bitboard blockers = mBoard.getAllPieces();
-    Bitboard ownPieces = mBoard.getTurn() == white ? mBoard.getWhitePieces() : mBoard.getBlackPieces();
+    Bitboard ownPieces = mBoard.getPieces(color);
 
     while (rooks) {
         Square startSquare = Utils::popLSB(rooks);
         Bitboard attacks = mAttack->getRookAttacks(startSquare, blockers);
         attacks &= ~ownPieces;
         while (attacks) {
-            Move move(startSquare, Utils::popLSB(attacks), QUIET);
-            if (board.isLegal(move) {
-                mMoves.push_back(move);
-            }
+            Move move(startSquare, Utils::popLSB(attacks), MoveType::Quiet);
+            mMoves.push_back(move);
         }
     }
 }
 
-void MoveGen::generatePseudoLegalQueenMoves()
+void MoveGen::generatePseudoLegalQueenMoves(Color color)
 {
-    Bitboard queens = mBoard.getTurn() == white ? mBoard.getWhiteQueens() : mBoard.getBlackQueens();
+    Bitboard queens = mBoard.getQueens(color);
     Bitboard blockers = mBoard.getAllPieces();
-    Bitboard ownPieces = mBoard.getTurn() == white ? mBoard.getWhitePieces() : mBoard.getBlackPieces();
+    Bitboard ownPieces = mBoard.getPieces(color);
 
     while (queens) {
         Square startSquare = Utils::popLSB(queens);
         Bitboard attacks = mAttack->getQueenAttacks(startSquare, blockers);
         attacks &= ~ownPieces;
         while (attacks) {
-            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), QUIET));
+            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), MoveType::Quiet));
         }
     }
 }
 
-void MoveGen::generatePseudoLegalKingMoves()
+void MoveGen::generatePseudoLegalKingMoves(Color color)
 {
-    Bitboard king = mBoard.getTurn() == white ? mBoard.getWhiteKing() : mBoard.getBlackKing();
-    Bitboard blockers = mBoard.getTurn() == white ? mBoard.getWhitePieces() : mBoard.getBlackPieces();
+    Bitboard king = mBoard.getKing(color);
+    Bitboard blockers = mBoard.getPieces(color);
 
     Square startSquare = Utils::popLSB(king);
     Bitboard attacks = mAttack->getKingAttacks(startSquare);
     attacks &= ~blockers;
     while (attacks) {
-        mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), QUIET));
+        mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), MoveType::Quiet));
     }
 }
 
@@ -165,9 +182,9 @@ std::vector<Move> MoveGen::getMoves() const noexcept
     return mMoves;
 }
 
-void MoveGen::generateLegalPawnMoves()
+void MoveGen::generateLegalPawnMoves(Color color)
 {
-    mBoard.getTurn() == white ? generateLegalWhitePawnMoves() : generateLegalBlackPawnMoves();
+    color == Color::White ? generateLegalWhitePawnMoves() : generateLegalBlackPawnMoves();
 }
 
 void MoveGen::generateLegalWhitePawnMoves()
@@ -180,18 +197,33 @@ void MoveGen::generateLegalWhitePawnMoves()
     Bitboard twoPawnPush = Utils::northOne(onePawnPush & Utils::THIRD_RANK) & mBoard.getEmptySquares();
     while (onePawnPush) {
         Square endSquare = Utils::popLSB(onePawnPush);
-        mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, QUIET));
+        if (Utils::getBitboard(endSquare) & Utils::EIGHTH_RANK) {
+            mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen));
+            mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Rook));
+            mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Bishop));
+            mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Knight));
+        } else {
+            mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Quiet));
+        }
     }
     while (twoPawnPush) {
         Square endSquare = Utils::popLSB(twoPawnPush);
-        mMoves.push_back(Move(Utils::southOne(Utils::southOne(endSquare)), endSquare, QUIET));
+        mMoves.push_back(Move(Utils::southOne(Utils::southOne(endSquare)), endSquare, MoveType::Quiet));
     }
     while (pawns) {
         Square startSquare = Utils::popLSB(pawns);
-        Bitboard attacks = mAttack->getPawnAttacks(startSquare, white);
+        Bitboard attacks = mAttack->getPawnAttacks(startSquare, Color::White);
         attacks &= enemyPieces;
         while (attacks) {
-            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), QUIET));
+            Square endSquare = Utils::popLSB(attacks);
+            if (Utils::getBitboard(endSquare) & Utils::EIGHTH_RANK) {
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen));
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Rook));
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Bishop));
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Knight));
+            } else {
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Quiet));
+            }
         }
     }
 }
@@ -206,28 +238,41 @@ void MoveGen::generateLegalBlackPawnMoves()
     Bitboard twoPawnPush = Utils::southOne(onePawnPush & Utils::SIXTH_RANK) & mBoard.getEmptySquares();
     while (onePawnPush) {
         Square endSquare = Utils::popLSB(onePawnPush);
-        if ((Bitboard(1) << endSquare) & Utils::FIRST_RANK) {
+        if (Utils::getBitboard(endSquare) & Utils::FIRST_RANK) {
+            mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen));
+            mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Rook));
+            mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Bishop));
+            mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Knight));
+        } else {
+            mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Quiet));
         }
-        mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, QUIET));
     }
     while (twoPawnPush) {
         Square endSquare = Utils::popLSB(twoPawnPush);
-        mMoves.push_back(Move(Utils::northOne(Utils::northOne(endSquare)), endSquare, QUIET));
+        mMoves.push_back(Move(Utils::northOne(Utils::northOne(endSquare)), endSquare, MoveType::Quiet));
     }
     while (pawns) {
         Square startSquare = Utils::popLSB(pawns);
-        Bitboard attacks = mAttack->getPawnAttacks(startSquare, black);
+        Bitboard attacks = mAttack->getPawnAttacks(startSquare, Color::Black);
         attacks &= enemyPieces;
         while (attacks) {
-            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), QUIET));
+            Square endSquare = Utils::popLSB(attacks);
+            if (Utils::getBitboard(endSquare) & Utils::EIGHTH_RANK) {
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen));
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Rook));
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Bishop));
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Knight));
+            } else {
+                mMoves.push_back(Move(startSquare, endSquare, MoveType::Quiet));
+            }
         }
     }
 }
 
-void MoveGen::generateLegalKnightMoves()
+void MoveGen::generateLegalKnightMoves(Color color)
 {
-    Bitboard knights = mBoard.getTurn() == white ? mBoard.getWhiteKnights() : mBoard.getBlackKnights();
-    Bitboard blockers = mBoard.getTurn() == white ? mBoard.getWhitePieces() : mBoard.getBlackPieces();
+    Bitboard knights = mBoard.getKnights(color);
+    Bitboard blockers = mBoard.getPieces(color);
     knights &= ~mPinnedPieces;
 
     while (knights) {
@@ -235,71 +280,89 @@ void MoveGen::generateLegalKnightMoves()
         Bitboard attacks = mAttack->getKnightAttacks(startSquare);
         attacks &= ~blockers;
         while (attacks) {
-            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), QUIET));
+            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), MoveType::Quiet));
         }
     }
 }
 
-void MoveGen::generateLegalBishopMoves()
+void MoveGen::generateLegalBishopMoves(Color color)
 {
-    Bitboard bishops = mBoard.getTurn() == white ? mBoard.getWhiteBishops() : mBoard.getBlackBishops();
+    Bitboard bishops = mBoard.getBishops(color);
     Bitboard blockers = mBoard.getAllPieces();
-    Bitboard ownPieces = mBoard.getTurn() == white ? mBoard.getWhitePieces() : mBoard.getBlackPieces();
-    bishops &= ~mPinnedPieces;
+    Bitboard ownPieces = mBoard.getPieces(color);
 
     while (bishops) {
         Square startSquare = Utils::popLSB(bishops);
         Bitboard attacks = mAttack->getBishopAttacks(startSquare, blockers);
         attacks &= ~ownPieces;
         while (attacks) {
-            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), QUIET));
+            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), MoveType::Quiet));
         }
     }
 }
 
-void MoveGen::generateLegalRookMoves()
+void MoveGen::generateLegalRookMoves(Color color)
 {
-    Bitboard rooks = mBoard.getTurn() == white ? mBoard.getWhiteRooks() : mBoard.getBlackRooks();
+    Bitboard rooks = mBoard.getRooks(color);
     Bitboard blockers = mBoard.getAllPieces();
-    Bitboard ownPieces = mBoard.getTurn() == white ? mBoard.getWhitePieces() : mBoard.getBlackPieces();
-    rooks &= ~mPinnedPieces;
+    Bitboard ownPieces = mBoard.getPieces(color);
 
     while (rooks) {
         Square startSquare = Utils::popLSB(rooks);
         Bitboard attacks = mAttack->getRookAttacks(startSquare, blockers);
         attacks &= ~ownPieces;
         while (attacks) {
-            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), QUIET));
+            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), MoveType::Quiet));
         }
     }
 }
 
-void MoveGen::generateLegalQueenMoves()
+void MoveGen::generateLegalQueenMoves(Color color)
 {
-    Bitboard queens = mBoard.getTurn() == white ? mBoard.getWhiteQueens() : mBoard.getBlackQueens();
+    Bitboard queens = mBoard.getQueens(color);
     Bitboard blockers = mBoard.getAllPieces();
-    Bitboard ownPieces = mBoard.getTurn() == white ? mBoard.getWhitePieces() : mBoard.getBlackPieces();
-    queens &= ~mPinnedPieces;
+    Bitboard ownPieces = mBoard.getPieces(color);
 
     while (queens) {
         Square startSquare = Utils::popLSB(queens);
         Bitboard attacks = mAttack->getQueenAttacks(startSquare, blockers);
         attacks &= ~ownPieces;
         while (attacks) {
-            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), QUIET));
+            mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), MoveType::Quiet));
         }
     }
 }
 
-void MoveGen::generateLegalKingMoves()
+void MoveGen::generateLegalKingMoves(Color color)
 {
-    Bitboard king = mBoard.getTurn() == white ? mBoard.getWhiteKing() : mBoard.getBlackKing();
-    Bitboard blockers = mBoard.getTurn() == white ? mBoard.getWhitePieces() : mBoard.getBlackPieces();
+    Bitboard king = mBoard.getKing(color);
+    bool kingsideRights = mBoard.getCastleRights(Castling::Kingside, color);
+    bool queensideRights = mBoard.getCastleRights(Castling::Queenside, color);
+    Bitboard blockers = mBoard.getPieces(color);
 
     Square startSquare = Utils::popLSB(king);
     Bitboard attacks = mAttack->getKingAttacks(startSquare);
     attacks &= ~blockers;
     while (attacks) {
-        mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), QUIET));
+        mMoves.push_back(Move(startSquare, Utils::popLSB(attacks), MoveType::Quiet));
+    }
+
+    if (!mBoard.isSquareUnderAttack(startSquare, !color, blockers)) {
+        // Castling
+        Bitboard startBitboard = Utils::getBitboard(startSquare);
+        if (kingsideRights) {
+            Bitboard kingsideOne = Utils::eastOne(startBitboard);
+            Bitboard kingsideTwo = Utils::eastOne(kingsideOne);
+            if (kingsideOne & ~blockers && kingsideTwo & ~blockers) {
+                mMoves.push_back(Move(startSquare, Utils::getSquare(kingsideTwo), MoveType::Castle));
+            }
+        }
+        if (queensideRights) {
+            Bitboard queensideOne = Utils::westOne(startBitboard);
+            Bitboard queensideTwo = Utils::westOne(queensideOne);
+            if (queensideOne & ~blockers && queensideTwo & ~blockers) {
+             mMoves.push_back(Move(startSquare, Utils::getSquare(queensideTwo), MoveType::Castle));
+            }
+        }
     }
 }

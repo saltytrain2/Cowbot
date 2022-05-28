@@ -1,6 +1,6 @@
 #include "Move.h"
 
-Move::Move(std::string lan) : mMove(0), mCapturedPiece(emptySquares)
+Move::Move(std::string lan) : mMove(0), mCapturedPiece(PieceSets::EmptySquares)
 {
     updateMove(lan);
 }
@@ -9,9 +9,9 @@ Move::Move(Bitmove src) : mMove(src)
 {
 }
 
-Move::Move(Square startSquare, Square endSquare, MoveType type) 
-    : mMove(startSquare | (endSquare << 6) | (type << 14))
-    , mCapturedPiece(emptySquares)
+Move::Move(Square startSquare, Square endSquare, MoveType type, PromotionPiece piece) 
+    : mMove(to_int(startSquare) | (to_int(endSquare) << 6) | (to_int(type) << 14) | (to_int(piece) << 12))
+    , mCapturedPiece(PieceSets::EmptySquares)
 {
 }
 
@@ -39,8 +39,8 @@ void Move::updateMove(std::string lan)
     Square startingSquare = Square(8 * (lan[1] - '1') + (lan[0] - 'a'));
     Square endingSquare = Square(8 * (lan[3] - '1') + (lan[2] - 'a'));
 
-    newMove |= startingSquare;
-    newMove |= endingSquare << 6;
+    newMove |= to_int(startingSquare);
+    newMove |= to_int(endingSquare) << 6;
     
     mMove = newMove;
 }

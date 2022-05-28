@@ -1,24 +1,36 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
+#include <cassert>
 #include <string>
 
 typedef uint64_t Bitboard;
 typedef std::string UCImove;
 typedef uint16_t Bitmove;
 
-enum Color {white, black};
+enum class Color : uint8_t {White, Black};
+
+inline constexpr uint8_t to_int(Color color) noexcept
+{
+    return static_cast<uint8_t>(color);
+}
+
+inline Color operator!(Color rhs)
+{
+    return Color(to_int(rhs) ^ 0);
+}
 
 // Little Endian Rank-File Mapping 
-enum Square : uint8_t {
-    a1, b1, c1, d1, e1, f1, g1, h1,
-    a2, b2, c2, d2, e2, f2, g2, h2,
-    a3, b3, c3, d3, e3, f3, g3, h3,
-    a4, b4, c4, d4, e4, f4, g4, h4,
-    a5, b5, c5, d5, e5, f5, g5, h5,
-    a6, b6, c6, d6, e6, f6, g6, h6,
-    a7, b7, c7, d7, e7, f7, g7, h7,
-    a8, b8, c8, d8, e8, f8, g8, h8, null
+enum class Square : uint8_t {
+    A1, B1, C1, D1, E1, F1, G1, H1,
+    A2, B2, C2, D2, E2, F2, G2, H2,
+    A3, B3, C3, D3, E3, F3, G3, H3,
+    A4, B4, C4, D4, E4, F4, G4, H4,
+    A5, B5, C5, D5, E5, F5, G5, H5,
+    A6, B6, C6, D6, E6, F6, G6, H6,
+    A7, B7, C7, D7, E7, F7, G7, H7,
+    A8, B8, C8, D8, E8, F8, G8, H8, Null
 };
 
 inline Square operator++(Square& rhs) 
@@ -49,10 +61,15 @@ inline Square operator-=(Square& rhs, uint8_t offset)
     return rhs;
 }
 
-enum PieceSets : uint8_t {
-    whitePawns, whiteKnights, whiteBishops, whiteRooks, whiteQueens, whiteKing,
-    blackPawns, blackKnights, blackBishops, blackRooks, blackQueens, blackKing,
-    whitePieces, blackPieces, allPieces, emptySquares
+inline constexpr uint8_t to_int(Square sq)
+{
+    return static_cast<uint8_t>(sq);
+}
+
+enum class PieceSets : uint8_t {
+    WhitePawns, BlackPawns, WhiteKnights, BlackKnights, WhiteBishops, BlackBishops,
+    WhiteRooks, BlackRooks, WhiteQueens, BlackQueens, WhiteKing, BlackKing,
+    WhitePieces, BlackPieces, AllPieces, EmptySquares
 };
 
 inline PieceSets operator++(PieceSets& rhs)
@@ -69,9 +86,19 @@ inline PieceSets operator--(PieceSets& rhs)
     return rhs;
 }
 
-enum Castling {kingside, queenside};
+inline constexpr uint8_t to_int(PieceSets piece)
+{
+    return static_cast<uint8_t>(piece);
+}
 
-enum PieceValues {
+enum class Castling : uint8_t {Kingside, Queenside};
+
+inline constexpr uint8_t to_int(Castling side)
+{
+    return static_cast<uint8_t>(side);
+}
+
+enum class PieceValues {
     pawn = 100,
     knight = 300,
     bishop = 300,
@@ -80,6 +107,20 @@ enum PieceValues {
     king = 100000
 };
 
-enum MoveType : uint8_t {
-    QUIET, CASTLE, PROMOTION, ENPASSANT
+enum class MoveType : uint8_t {
+    Quiet, Castle, Promotion, Enpassant
 };
+
+inline constexpr uint8_t to_int(MoveType type) 
+{
+    return static_cast<uint8_t>(type);
+}
+
+enum class PromotionPiece : uint8_t {
+    Knight, Bishop, Rook, Queen, Null = 0
+};
+
+inline constexpr uint8_t to_int(PromotionPiece piece)
+{
+    return static_cast<uint8_t>(piece);
+}
