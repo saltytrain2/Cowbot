@@ -1,7 +1,7 @@
 #include "ChessBoard.h"
 
 
-ChessBoard::ChessBoard(Attack* ptr, const std::string& layout)
+ChessBoard::ChessBoard(std::shared_ptr<Attack> ptr, const std::string& layout)
     : mAttack(ptr), mPieceBB{}, mTurn(Color::White), mCastle{}, mSquareBoard{}, mMoveList{}
 {
     updateChessBoard(layout);

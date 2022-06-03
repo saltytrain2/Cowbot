@@ -10,6 +10,7 @@
 #include <stack>
 #include <string>
 #include <algorithm>
+#include <memory>
 
 #include "types.h"
 #include "Move.h"
@@ -20,7 +21,7 @@ class ChessBoard
 public:
     // Alternate constructor w/ default parameter
     // layout follows Forsyth-Edwards Notation, no guarantee on 3-fold repetition
-    explicit ChessBoard(Attack* ptr, const std::string& layout = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    explicit ChessBoard(std::shared_ptr<Attack> ptr, const std::string& layout = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
     ~ChessBoard() = default;
     ChessBoard(const ChessBoard& rhs) = default;
@@ -75,7 +76,7 @@ public:
     Bitboard getKingAttackers(Color turn, Bitboard blockers);
     bool isKingUnderAttack(Color turn, Bitboard blockers);
 private:
-    Attack* mAttack;
+    std::shared_ptr<Attack> mAttack;
     // buffer to store all bitboards describing the board state
     // boards 0-5 describe individual white pieces ordered from pawn, knight ... queen, king
     // boards 6-11 describe individual black pieces ordered from pawn, knight ... queen, king
