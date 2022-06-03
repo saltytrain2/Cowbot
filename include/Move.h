@@ -15,7 +15,11 @@ public:
     Move& operator=(const Move& rhs) = default;
 
     void updateMove(std::string lan);
-    Bitmove getMove() const noexcept;
+    Square getStartingSquare() const noexcept;
+    Square getEndingSquare() const noexcept;
+    MoveType getMoveType() const noexcept;
+    PromotionPiece getPromotionPiece() const noexcept;
+
     void setCapturedPiece(PieceSets piece) noexcept;
     PieceSets getCapturedPiece() const;
     // converting a lan string into its 16-bit representation

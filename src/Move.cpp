@@ -10,7 +10,7 @@ Move::Move(Bitmove src) : mMove(src)
 }
 
 Move::Move(Square startSquare, Square endSquare, MoveType type, PromotionPiece piece) 
-    : mMove(to_int(startSquare) | (to_int(endSquare) << 6) | (to_int(type) << 14) | (to_int(piece) << 12))
+    : mMove(to_int(startSquare) | (to_int(endSquare) << 6) | (to_int(type) << 14) | ((to_int(piece) << 12)))
     , mCapturedPiece(PieceSets::EmptySquares)
 {
 }
@@ -45,10 +45,29 @@ void Move::updateMove(std::string lan)
     mMove = newMove;
 }
 
-Bitmove Move::getMove() const noexcept
+Square Move::getStartingSquare() const noexcept
 {
-    return mMove;
+    return Square(mMove & 0x3F);
 }
+
+Square Move::getEndingSquare() const noexcept
+{
+    return Square((mMove & 0xFC0) >> 6);
+}
+
+MoveType Move::getMoveType() const noexcept
+{
+    return MoveType((mMove & 0xC000) >> 14);
+}
+
+PromotionPiece Move::getPromotionPiece() const noexcept
+{
+    if (getMoveType() != MoveType::Promotion) {
+        return PromotionPiece::Null;
+    }
+
+    return PromotionPiece((mMove & 0x3000) >> 12);
+}   
 
 void Move::setCapturedPiece(PieceSets piece) noexcept
 {

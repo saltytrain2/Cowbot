@@ -1,8 +1,22 @@
 #include "doctest.h"
 #include "Attack.h"
+#include "ChessBoard.h"
 
 TEST_CASE("Attack Bitboards") {
     Attack attackBoards;
+    ChessBoard board(&attackBoards);
+    board.updateChessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+    SUBCASE("Pawn Bitboards") {
+        CHECK(attackBoards.getPawnAttacks(Square::A2, Color::White) == 0x20000);
+        CHECK(attackBoards.getPawnAttacks(Square::A2, Color::Black) == 0x2);
+        CHECK(attackBoards.getPawnAttacks(Square::D4, Color::White) == 0x1400000000);
+        CHECK(attackBoards.getPawnAttacks(Square::D4, Color::Black) == 0x140000);
+        CHECK(attackBoards.getPawnAttacks(Square::H5, Color::White) == 0x400000000000);
+        CHECK(attackBoards.getPawnAttacks(Square::H5, Color::Black) == 0x40000000);
+        CHECK(attackBoards.getPawnAttacks(Square::F7, Color::White) == 0x5000000000000000);
+        CHECK(attackBoards.getPawnAttacks(Square::F7, Color::Black) == 0x500000000000);
+    }
 
     SUBCASE("King Bitboards") {
         CHECK(attackBoards.getKingAttacks(Square::A1) == 0x302);
@@ -33,6 +47,7 @@ TEST_CASE("Attack Bitboards") {
         CHECK(attackBoards.getBishopAttacks(Square::B2, 0xBBE728005426E391) == 0x50005);
         CHECK(attackBoards.getBishopAttacks(Square::G4, 0xBBE728005426E391) == 0x40810A000A00000);
         CHECK(attackBoards.getBishopAttacks(Square::F8, 0xBBE728005426E391) == 0x50080000000000);
+        CHECK(attackBoards.getBishopAttacks(Utils::getSquare(board.getKing(Color::White)), 0) == 0x182442800);
     }
 
     SUBCASE("Rook Bitboards") {
@@ -45,5 +60,25 @@ TEST_CASE("Attack Bitboards") {
     SUBCASE("Queen Bitboards") {
         CHECK(attackBoards.getQueenAttacks(Square::B3, 0xBBE728005426E391) == 0x2020207050708);
         CHECK(attackBoards.getQueenAttacks(Square::D8, 0xBBE728005426E391) == 0x161C280000000000);
+    }
+
+    SUBCASE("In Between Bitboards") {
+        CHECK(attackBoards.inBetween(Square::A1, Square::A3) == 0x100);
+        CHECK(attackBoards.inBetween(Square::B4, Square::E1) == 0x40800);
+        CHECK(attackBoards.inBetween(Square::C3, Square::F7) == 0);
+        CHECK(attackBoards.inBetween(Square::D1, Square::D8) == 0x8080808080800);
+        CHECK(attackBoards.inBetween(Square::D6, Square::H6) == 0x700000000000);
+        CHECK(attackBoards.inBetween(Square::A7, Square::G1) == 0x20408102000);
+        CHECK(attackBoards.inBetween(Square::H3, Square::C8) == 0x8102040000000);
+    }
+
+    SUBCASE("Lined Bitboards") {
+        CHECK(attackBoards.inLine(Square::A1, Square::A3) == 0x101010101010101);
+        CHECK(attackBoards.inLine(Square::B4, Square::E1) == 0x102040810);
+        CHECK(attackBoards.inLine(Square::C3, Square::F7) == 0);
+        CHECK(attackBoards.inLine(Square::D1, Square::D8) == 0x808080808080808);
+        CHECK(attackBoards.inLine(Square::D6, Square::H6) == 0xFF0000000000);
+        CHECK(attackBoards.inLine(Square::A7, Square::G1) == 0x1020408102040);
+        CHECK(attackBoards.inLine(Square::H3, Square::C8) == 0x408102040800000);
     }
 }

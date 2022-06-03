@@ -23,6 +23,8 @@ constexpr Bitboard NOT_A_FILE = ~A_FILE;
 constexpr Bitboard NOT_H_FILE = ~H_FILE;
 constexpr Bitboard EDGES = A_FILE | H_FILE | FIRST_RANK | EIGHTH_RANK;
 constexpr Bitboard NOT_EDGES = ~EDGES;
+constexpr Bitboard WHITE_DIAGONAL = 0x102040810204080;
+constexpr Bitboard BLACK_DIAGONAL = 0x8040201008040201;
 
 // Bitboard operations
 Bitboard eastOne(Bitboard pieceLoc);
@@ -36,6 +38,7 @@ Bitboard southwestOne(Bitboard pieceLoc);
 Bitboard getBitboard(Square sq);
 Square popLSB(Bitboard& pieceLocs);
 uint8_t getTrailingZeros(Bitboard src);
+bool isOneHot(Bitboard loc);
 
 
 // Square operations

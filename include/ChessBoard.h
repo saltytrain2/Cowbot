@@ -20,11 +20,13 @@ class ChessBoard
 public:
     // Alternate constructor w/ default parameter
     // layout follows Forsyth-Edwards Notation, no guarantee on 3-fold repetition
-    explicit ChessBoard(Attack* ptr, std::string layout = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    explicit ChessBoard(Attack* ptr, const std::string& layout = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
     ~ChessBoard() = default;
     ChessBoard(const ChessBoard& rhs) = default;
     ChessBoard& operator=(const ChessBoard& rhs) = default;
+
+    void updateChessBoard(const std::string& layout);
 
     // All of the get methods for each bitboard
     Bitboard getWhitePawns() const noexcept;
@@ -69,11 +71,9 @@ public:
     void undoMove();
 
 
-    bool isLegal(const Move& move, Color turn);
-    bool legalPinnedMove(Bitboard startLoc, Bitboard endLoc, Bitboard blockers);
-    bool isSquareUnderAttack(Square sq, Color color, Bitboard blockers);
-    Bitboard squareAttackers(Square sq, Color color, Bitboard blockers);
-
+    bool isLegal(const Move& move);
+    Bitboard getKingAttackers(Color turn, Bitboard blockers);
+    bool isKingUnderAttack(Color turn, Bitboard blockers);
 private:
     Attack* mAttack;
     // buffer to store all bitboards describing the board state
@@ -103,9 +103,14 @@ private:
     void updateRedundantBitboards() noexcept;
     void updateSquareBoard() noexcept;
     void updateCastlingRights(PieceSets movedPiece) noexcept;
-    void updatePinnedPieces() noexcept;
+    void updatePinnedPieces(Color color) noexcept;
 
     // TODO 
     // possibly have to overload this function with a string and rank version
     void updateBitboards(const std::vector<std::string>& piecesByRank) noexcept;
+
+    bool isLegalPinnedMove(Bitboard startLoc, Bitboard endLoc, Color turn);
+    Bitboard squareAttackers(Square sq, Color color, Bitboard blockers) const;
+    Bitboard squareBlockers(Square sq, Color color);
+    bool isSquareUnderAttack(Square sq, Color color, Bitboard blockers);
 };

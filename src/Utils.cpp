@@ -118,3 +118,8 @@ Square Utils::popLSB(Bitboard& pieceLocs)
     pieceLocs &= pieceLocs - 1;
     return SQUARE_LOOKUP[index];
 }
+
+bool Utils::isOneHot(Bitboard loc)
+{
+    return loc && !(loc & (loc - 1));
+}

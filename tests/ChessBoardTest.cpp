@@ -5,8 +5,9 @@
 #include "Attack.h"
 
 TEST_CASE("standard game") {
-    auto attack = std::shared_ptr<Attack>();
+    auto attack = std::make_shared<Attack>();
     ChessBoard board(attack.get());
+    board.updateChessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     CHECK(board.getTurn() == Color::White);
     CHECK(board.getWhiteCastleRights(Castling::Kingside) == true);
     CHECK(board.getWhiteCastleRights(Castling::Queenside) == true);
@@ -28,6 +29,7 @@ TEST_CASE("standard game") {
     CHECK(board.getBlackPieces() == 0xFFFF000000000000);
     CHECK(board.getAllPieces() == 0xFFFF00000000FFFF);
     CHECK(board.getEmptySquares() == 0xFFFFFFFF0000);
+    CHECK(board.getPinnedPieces() == 0);
     board.printSquareBoard();
 
     SUBCASE("making valid moves") {
@@ -36,13 +38,11 @@ TEST_CASE("standard game") {
         board.printSquareBoard();
         CHECK(board.getWhitePawns() == 0x1000EF00);
         CHECK(board.getMoveList().size() == 1);
-        CHECK(board.getMoveList().back().getMove() == 0x70C);
         Move move2("e7e5");
         move.updateMove("e7e5");
         board.makeMove(move);
         CHECK(board.getBlackPawns() == 0xEF001000000000);
         CHECK(board.getMoveList().size() == 2);
-        CHECK(board.getMoveList().back().getMove() == 0x934);
         CHECK(board.getMoveList().back().getCapturedPiece() == PieceSets::EmptySquares);
         move.updateMove("g1f3");
         board.makeMove(move);

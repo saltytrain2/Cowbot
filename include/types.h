@@ -18,7 +18,7 @@ inline constexpr uint8_t to_int(Color color) noexcept
 
 inline Color operator!(Color rhs)
 {
-    return Color(to_int(rhs) ^ 0);
+    return Color(to_int(rhs) ^ 1);
 }
 
 // Little Endian Rank-File Mapping 

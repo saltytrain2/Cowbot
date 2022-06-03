@@ -18,9 +18,9 @@ public:
     Bitboard getRookAttacks(Square sq, Bitboard blockers);
     Bitboard getQueenAttacks(Square sq, Bitboard blockers);
 
-    // debugging functions
-    Bitboard getBishopMasks(Square sq);
-    Bitboard getRookMasks(Square sq);
+    Bitboard inBetween(Square from, Square to);
+    Bitboard inLine(Square from, Square to);
+
 private:
     // masks for each square on the board
     Bitboard mBishopMasks[64];
@@ -35,6 +35,9 @@ private:
     Bitboard mBishopAttacks[64][512];
     Bitboard mRookAttacks[64][4096];
 
+    Bitboard mBetweenRectangular[64][64];
+    Bitboard mLined[64][64];
+
     Bitboard getMaskedBlockers(Bitboard mask, uint16_t index);
     Bitboard getSlidingMasks(PieceSets piece, Square sq);
 
@@ -48,4 +51,7 @@ private:
     void initKnightAttacks();
     void initBishopAttacks();
     void initRookAttacks();
+
+    void initBetweenTable();
+    void initLinedTable();
 };

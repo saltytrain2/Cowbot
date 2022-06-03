@@ -65,6 +65,8 @@ Attack::Attack()
     initKnightAttacks();
     initBishopAttacks();
     initRookAttacks();
+    initBetweenTable();
+    initLinedTable();
 }
 
 Bitboard Attack::getMaskedBlockers(Bitboard mask, uint16_t index)
@@ -195,16 +197,6 @@ Bitboard Attack::calcKnightAttacks(Bitboard knightLoc)
     return attacks;
 }   
 
-Bitboard Attack::getBishopMasks(Square sq)
-{
-    return mBishopMasks[to_int(sq)];
-}
-
-Bitboard Attack::getRookMasks(Square sq)
-{
-    return mRookMasks[to_int(sq)];
-}
-
 Bitboard Attack::getSlidingMasks(PieceSets piece, Square sq)
 {
     Bitboard attacks = 0;
@@ -308,5 +300,50 @@ Bitboard Attack::calcRookAttacks(Square sq, Bitboard blockers)
         }
     }
     return attacks;
+}
+
+Bitboard Attack::inBetween(Square from, Square to)
+{
+    return mBetweenRectangular[to_int(from)][to_int(to)];
+}
+
+void Attack::initBetweenTable()
+{
+    constexpr Bitboard allSet = Utils::EDGES | Utils::NOT_EDGES;
+    constexpr Bitboard a2a7 = Utils::A_FILE & ~(Utils::EIGHTH_RANK | Utils::FIRST_RANK);
+    constexpr Bitboard b2g7 = Utils::BLACK_DIAGONAL & ~(Utils::EIGHTH_RANK | Utils::FIRST_RANK);
+    constexpr Bitboard h1b7 = Utils::WHITE_DIAGONAL & ~Utils::EIGHTH_RANK;
+
+    for (Square i = Square::A1; i < Square::Null; ++i) {
+        for (Square j = Square::A1; j < Square::Null; ++j) {
+            Bitboard between = (allSet << to_int(i)) ^ (allSet << to_int(j));
+            Bitboard file = (to_int(j) & 7) - (to_int(i) & 7);
+            Bitboard rank = ((to_int(j) | 7) - to_int(i)) >> 3;
+            Bitboard line = ((file & 7) - 1) & a2a7;
+            line += 2 * (((rank & 7) - 1) >> 58);
+            line += (((rank - file) & 15) - 1) & b2g7;
+            line += (((rank + file) & 15) - 1) & h1b7;
+            line *= between & -between;
+            mBetweenRectangular[to_int(i)][to_int(j)] = line & between;
+        }
+    }
+}
+
+Bitboard Attack::inLine(Square from, Square to)
+{
+    return mLined[to_int(from)][to_int(to)];
+}
+
+void Attack::initLinedTable()
+{
+    for (Square i = Square::A1; i < Square::Null; ++i) {
+        for (Square j = Square::A1; j < Square::Null; ++j) {
+            if (getBishopAttacks(i, 0) & Utils::getBitboard(j)) {
+                mLined[to_int(i)][to_int(j)] = (getBishopAttacks(i, 0) & getBishopAttacks(j, 0)) | Utils::getBitboard(i) | Utils::getBitboard(j);
+            } else if (getRookAttacks(i, 0) & Utils::getBitboard(j)) {
+                mLined[to_int(i)][to_int(j)] = (getRookAttacks(i, 0) & getRookAttacks(j, 0)) | Utils::getBitboard(i) | Utils::getBitboard(j);
+            }
+        }
+    }
 }
 
