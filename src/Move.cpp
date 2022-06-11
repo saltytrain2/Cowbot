@@ -78,3 +78,31 @@ PieceSets Move::getCapturedPiece() const
 {
     return mCapturedPiece;
 }
+
+std::string Move::toString() const
+{
+    std::string res;
+    auto startNumber = to_int(getStartingSquare()) / 8;
+    auto startLetter = to_int(getStartingSquare()) % 8;
+    auto endNumber = to_int(getEndingSquare()) / 8;
+    auto endLetter = to_int(getEndingSquare()) % 8;
+
+    res += char(startLetter + 'a');
+    res += char(startNumber + '1');
+    res += char(endLetter + 'a');
+    res += char(endNumber + '1');
+
+    if (getMoveType() == MoveType::Promotion) {
+        auto piece = to_int(getPromotionPiece());
+        if (piece == 0) {
+            res += 'n';
+        } else if (piece == 1) {
+            res += 'b';
+        } else if (piece == 2) {
+            res += 'r';
+        } else {
+            res += 'q';
+        }
+    }
+    return res;
+}

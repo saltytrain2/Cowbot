@@ -21,7 +21,7 @@ class ChessBoard
 public:
     // Alternate constructor w/ default parameter
     // layout follows Forsyth-Edwards Notation, no guarantee on 3-fold repetition
-    explicit ChessBoard(std::shared_ptr<Attack> ptr, const std::string& layout = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    explicit ChessBoard(Attack* ptr, const std::string& layout = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
     ~ChessBoard() = default;
     ChessBoard(const ChessBoard& rhs) = default;
@@ -65,18 +65,22 @@ public:
 
     std::vector<Move> getMoveList() const noexcept;
     Bitboard getPinnedPieces() const noexcept;
+    Bitboard getEnpassantTarget() const noexcept;
     void printSquareBoard() const noexcept;
 
     // makes the move
-    int makeMove(Move& nextMove) noexcept;
+    void makeMove(Move& nextMove);
     void undoMove();
 
 
     bool isLegal(const Move& move);
     Bitboard getKingAttackers(Color turn, Bitboard blockers);
     bool isKingUnderAttack(Color turn, Bitboard blockers);
+
+    // debug
+    bool validateSquareBoard() const;
 private:
-    std::shared_ptr<Attack> mAttack;
+    Attack* mAttack;
     // buffer to store all bitboards describing the board state
     // boards 0-5 describe individual white pieces ordered from pawn, knight ... queen, king
     // boards 6-11 describe individual black pieces ordered from pawn, knight ... queen, king
@@ -97,20 +101,23 @@ private:
     std::vector<Move> mMoveList;
     std::vector<std::array<std::array<bool, 2>, 2>> mCastlingList;
     std::vector<Bitboard> mPinnedList;
+    std::vector<Bitboard> mEnpassantList;
+    //std::vector<PieceSets> mCapturedList;
 
     // keeping track of which pieces are currently pinned
     Bitboard mPinnedPieces;
+    Bitboard mEnpassantTarget;
 
     void updateRedundantBitboards() noexcept;
     void updateSquareBoard() noexcept;
-    void updateCastlingRights(PieceSets movedPiece) noexcept;
+    void updateCastlingRights() noexcept;
     void updatePinnedPieces(Color color) noexcept;
 
     // TODO 
     // possibly have to overload this function with a string and rank version
     void updateBitboards(const std::vector<std::string>& piecesByRank) noexcept;
 
-    bool isLegalPinnedMove(Bitboard startLoc, Bitboard endLoc, Color turn);
+    bool isLegalPinnedMove(Square startSquare, Square endSquare, Color turn);
     Bitboard squareAttackers(Square sq, Color color, Bitboard blockers) const;
     Bitboard squareBlockers(Square sq, Color color);
     bool isSquareUnderAttack(Square sq, Color color, Bitboard blockers);

@@ -23,7 +23,9 @@ public:
     void setCapturedPiece(PieceSets piece) noexcept;
     PieceSets getCapturedPiece() const;
     // converting a lan string into its 16-bit representation
-    //Bitmove convertStringToMove(const std::string& lan);
+    
+    std::string toString() const;
+
 private:
     // Based off of Stockfish's move representation
     // one move contains 16 bits of information

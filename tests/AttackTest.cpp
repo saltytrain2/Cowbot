@@ -1,11 +1,11 @@
 #include "doctest.h"
+
+#include <memory>
+
 #include "Attack.h"
-#include "ChessBoard.h"
 
 TEST_CASE("Attack Bitboards") {
     auto attackBoards = std::make_shared<Attack>();
-    ChessBoard board(attackBoards);
-    board.updateChessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     SUBCASE("Pawn Bitboards") {
         CHECK(attackBoards->getPawnAttacks(Square::A2, Color::White) == 0x20000);
@@ -16,6 +16,7 @@ TEST_CASE("Attack Bitboards") {
         CHECK(attackBoards->getPawnAttacks(Square::H5, Color::Black) == 0x40000000);
         CHECK(attackBoards->getPawnAttacks(Square::F7, Color::White) == 0x5000000000000000);
         CHECK(attackBoards->getPawnAttacks(Square::F7, Color::Black) == 0x500000000000);
+        CHECK(attackBoards->getPawnAttacks(Square::E5, Color::White) == 0x280000000000);
     }
 
     SUBCASE("King Bitboards") {
@@ -47,7 +48,7 @@ TEST_CASE("Attack Bitboards") {
         CHECK(attackBoards->getBishopAttacks(Square::B2, 0xBBE728005426E391) == 0x50005);
         CHECK(attackBoards->getBishopAttacks(Square::G4, 0xBBE728005426E391) == 0x40810A000A00000);
         CHECK(attackBoards->getBishopAttacks(Square::F8, 0xBBE728005426E391) == 0x50080000000000);
-        CHECK(attackBoards->getBishopAttacks(Utils::getSquare(board.getKing(Color::White)), 0) == 0x182442800);
+        CHECK((attackBoards->getBishopAttacks(Square::A6, 0x5962340000001100) & 0x20) == 0);
     }
 
     SUBCASE("Rook Bitboards") {
@@ -70,6 +71,7 @@ TEST_CASE("Attack Bitboards") {
         CHECK(attackBoards->inBetween(Square::D6, Square::H6) == 0x700000000000);
         CHECK(attackBoards->inBetween(Square::A7, Square::G1) == 0x20408102000);
         CHECK(attackBoards->inBetween(Square::H3, Square::C8) == 0x8102040000000);
+        CHECK(attackBoards->inBetween(Square::E1, Square::H4) == 0x402000);
     }
 
     SUBCASE("Lined Bitboards") {

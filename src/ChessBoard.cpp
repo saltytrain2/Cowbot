@@ -1,10 +1,15 @@
 #include "ChessBoard.h"
 
 
-ChessBoard::ChessBoard(std::shared_ptr<Attack> ptr, const std::string& layout)
+ChessBoard::ChessBoard(Attack* ptr, const std::string& layout)
     : mAttack(ptr), mPieceBB{}, mTurn(Color::White), mCastle{}, mSquareBoard{}, mMoveList{}
 {
     updateChessBoard(layout);
+    mMoveList.reserve(200);
+    mCastlingList.reserve(200);
+    mPinnedList.reserve(200);
+    mEnpassantList.reserve(200);
+    //mCapturedList.reserve(200);
 }
 
 Bitboard ChessBoard::getWhitePawns() const noexcept
@@ -200,68 +205,81 @@ void ChessBoard::updateRedundantBitboards() noexcept
     mPieceBB[to_int(PieceSets::EmptySquares)] = ~mPieceBB[to_int(PieceSets::AllPieces)];
 }
 
-int ChessBoard::makeMove(Move& nextMove) noexcept
+void ChessBoard::makeMove(Move& nextMove)
 {
-    mMoveList.push_back(nextMove);
-    mPinnedList.push_back(mPinnedPieces);
-    mCastlingList.push_back(mCastle);
     Square startingSquare = nextMove.getStartingSquare();
     Square endingSquare = nextMove.getEndingSquare();
+    Bitboard startBitboard = Utils::getBitboard(startingSquare);
+    Bitboard endBitboard = Utils::getBitboard(endingSquare);
     MoveType type = nextMove.getMoveType();
     PieceSets movedPiece = mSquareBoard[to_int(startingSquare)];
     PieceSets capturedPiece = mSquareBoard[to_int(endingSquare)];
 
-    mPieceBB[to_int(movedPiece)] |= Utils::getBitboard(endingSquare);
-    mPieceBB[to_int(movedPiece)] &= ~Utils::getBitboard(startingSquare);
+    mPieceBB[to_int(movedPiece)] ^= startBitboard | endBitboard;
+    mPieceBB[to_int(capturedPiece)] &= ~endBitboard;
+    mSquareBoard[to_int(startingSquare)] = PieceSets::EmptySquares;
+    mSquareBoard[to_int(endingSquare)] = movedPiece;
+    nextMove.setCapturedPiece(capturedPiece);
 
-    if (capturedPiece != PieceSets::EmptySquares) {
-        nextMove.setCapturedPiece(capturedPiece);
-        mPieceBB[to_int(capturedPiece)] &= ~Utils::getBitboard(endingSquare);
-    }
+    // if (capturedPiece != PieceSets::EmptySquares) {
+    //     nextMove.setCapturedPiece(capturedPiece);
+    //     mPieceBB[to_int(capturedPiece)] &= ~endBitboard;
+    // }
 
     if (type == MoveType::Castle) {
         if (to_int(startingSquare) < to_int(endingSquare)) {
-            mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] |= Utils::eastOne(Utils::getBitboard(startingSquare));
-            mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] &= ~Utils::eastOne(Utils::getBitboard(endingSquare));
+            mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] ^= Utils::eastOne(startBitboard) | Utils::eastOne(endBitboard);
+            mSquareBoard[to_int(Utils::eastOne(endingSquare))] = PieceSets::EmptySquares;
+            mSquareBoard[to_int(Utils::eastOne(startingSquare))] = PieceSets(to_int(PieceSets::WhiteRooks) + to_int(mTurn));
         } else {
-            mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] |= Utils::westOne(Utils::getBitboard(startingSquare));
-            mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] &= ~Utils::westOne(Utils::westOne(Utils::getBitboard(endingSquare)));
+            mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] ^= Utils::westOne(startBitboard) | Utils::westOne(Utils::westOne(endBitboard));
+            mSquareBoard[to_int(Utils::westOne(Utils::westOne(endingSquare)))] = PieceSets::EmptySquares;
+            mSquareBoard[to_int(Utils::westOne(startingSquare))] = PieceSets(to_int(PieceSets::WhiteRooks) + to_int(mTurn));
         }
     } else if (type == MoveType::Promotion) {
         PromotionPiece promotion = nextMove.getPromotionPiece();
-        mPieceBB[to_int(movedPiece)] &= ~Utils::getBitboard(endingSquare);
-        mPieceBB[to_int(promotion) + 2 + to_int(mTurn)] |= Utils::getBitboard(endingSquare);
+        mPieceBB[to_int(movedPiece)] &= ~endBitboard;
+        mPieceBB[(to_int(promotion) << 1) + 2 + to_int(mTurn)] |= endBitboard;
+        mSquareBoard[to_int(endingSquare)] = PieceSets((to_int(promotion) << 1) + 2 + to_int(mTurn));
     } else if (type == MoveType::Enpassant) {
         if (movedPiece == PieceSets::WhitePawns) {
-            mPieceBB[to_int(PieceSets::BlackPawns)] &= Utils::southOne(Utils::getBitboard(endingSquare));
-            nextMove.setCapturedPiece(PieceSets::BlackPawns);
+            mPieceBB[to_int(PieceSets::BlackPawns)] &= ~Utils::southOne(endBitboard);
+            mSquareBoard[to_int(Utils::southOne(endingSquare))] = PieceSets::EmptySquares;
         } else {
-            mPieceBB[to_int(PieceSets::WhitePawns)] &= Utils::northOne(Utils::getBitboard(endingSquare));
-            nextMove.setCapturedPiece(PieceSets::WhitePawns);
+            mPieceBB[to_int(PieceSets::WhitePawns)] &= ~Utils::northOne(endBitboard);
+            mSquareBoard[to_int(Utils::northOne(endingSquare))] = PieceSets::EmptySquares;
         }
+    }
+    mMoveList.push_back(nextMove);
+    mPinnedList.push_back(mPinnedPieces);
+    mCastlingList.push_back(mCastle);
+    mEnpassantList.push_back(mEnpassantTarget);
+
+    if (movedPiece == PieceSets::WhitePawns && to_int(endingSquare) - to_int(startingSquare) == 16) {
+        mEnpassantTarget = Utils::southOne(endBitboard);
+    } else if (movedPiece == PieceSets::BlackPawns && to_int(startingSquare) - to_int(endingSquare) == 16) {
+        mEnpassantTarget = Utils::northOne(endBitboard);
+    } else {
+        mEnpassantTarget = 0;
     }
 
     updateRedundantBitboards();
-    updateSquareBoard();
-    updateCastlingRights(movedPiece);
+    updateCastlingRights();
+    mTurn = !mTurn;
     updatePinnedPieces(mTurn);
-    
-    return 0;
 }
 
 
 void ChessBoard::updateSquareBoard() noexcept
 {
     for (Square i = Square::A1; i < Square::Null; ++i) {
-        bool changed = false;
-        for (PieceSets j = PieceSets::WhitePawns; j < PieceSets::WhitePieces; ++j) {
-            if (mPieceBB[to_int(j)] & Utils::getBitboard(i)) {
-                mSquareBoard[to_int(i)] = j;
-                changed = true;
-            }
-        }
-        if (!changed) {
-            mSquareBoard[to_int(i)] = PieceSets::EmptySquares;
+        mSquareBoard[to_int(i)] = PieceSets::EmptySquares;
+    }
+
+    for (PieceSets i = PieceSets::WhitePawns; i < PieceSets::WhitePieces; ++i) {
+        Bitboard pieces = mPieceBB[to_int(i)];
+        while (pieces) {
+            mSquareBoard[to_int(Utils::popLSB(pieces))] = i;
         }
     }
 }
@@ -318,47 +336,51 @@ void ChessBoard::undoMove()
     Move prevMove = mMoveList.back();
     mCastle = mCastlingList.back();
     mPinnedPieces = mPinnedList.back();
+    mEnpassantTarget = mEnpassantList.back();
     mTurn = !mTurn;
 
     Square startingSquare = prevMove.getStartingSquare();
     Square endingSquare = prevMove.getEndingSquare();
+    Bitboard startBitboard = Utils::getBitboard(startingSquare);
+    Bitboard endBitboard = Utils::getBitboard(endingSquare);
     MoveType type = prevMove.getMoveType();
-
     PieceSets movedPiece = mSquareBoard[to_int(endingSquare)];
-    PieceSets capturedPiece = mMoveList[mMoveList.size() - 1].getCapturedPiece();
-    mPieceBB[to_int(movedPiece)] |= Utils::getBitboard(startingSquare);
-    mPieceBB[to_int(movedPiece)] &= ~Utils::getBitboard(endingSquare);
-    
-    if (capturedPiece != PieceSets::EmptySquares) {
-        mPieceBB[to_int(capturedPiece)] |= Utils::getBitboard(endingSquare);
-    }
+    PieceSets capturedPiece = prevMove.getCapturedPiece();
+
+    mPieceBB[to_int(movedPiece)] ^= startBitboard | endBitboard;
+    mPieceBB[to_int(capturedPiece)] |= endBitboard;
+    mSquareBoard[to_int(startingSquare)] = movedPiece;
+    mSquareBoard[to_int(endingSquare)] = capturedPiece;
 
     if (type == MoveType::Castle) {
         if (to_int(startingSquare) < to_int(endingSquare)) {
-            mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] &= ~Utils::eastOne(Utils::getBitboard(startingSquare));
-            mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] |= Utils::eastOne(Utils::getBitboard(endingSquare));
+            mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] ^= Utils::eastOne(startBitboard) | Utils::eastOne(endBitboard);
+            mSquareBoard[to_int(Utils::eastOne(endingSquare))] = PieceSets(to_int(PieceSets::WhiteRooks) + to_int(mTurn));
+            mSquareBoard[to_int(Utils::eastOne(startingSquare))] = PieceSets::EmptySquares;
         } else {
-            mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] &= ~Utils::westOne(Utils::getBitboard(startingSquare));
-            mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] |= Utils::westOne(Utils::westOne(Utils::getBitboard(endingSquare)));
+            mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] ^= Utils::westOne(startBitboard) | Utils::westOne(Utils::westOne(endBitboard));
+            mSquareBoard[to_int(Utils::westOne(Utils::westOne(endingSquare)))] = PieceSets(to_int(PieceSets::WhiteRooks) + to_int(mTurn));
+            mSquareBoard[to_int(Utils::westOne(startingSquare))] = PieceSets::EmptySquares;
         }
     } else if (type == MoveType::Promotion) {
-        PromotionPiece promotion = prevMove.getPromotionPiece();
-        mPieceBB[to_int(promotion) + 2 + to_int(mTurn)] &= ~Utils::getBitboard(endingSquare);
+        mPieceBB[to_int(movedPiece)] &= ~startBitboard;
+        mPieceBB[to_int(PieceSets::WhitePawns) + to_int(mTurn)] |= startBitboard;
+        mSquareBoard[to_int(startingSquare)] = PieceSets(to_int(PieceSets::WhitePawns) + to_int(mTurn));
     } else if (type == MoveType::Enpassant) {
         if (movedPiece == PieceSets::WhitePawns) {
-            mPieceBB[to_int(PieceSets::BlackPawns)] |= Utils::southOne(Utils::getBitboard(endingSquare));
-            mPieceBB[to_int(PieceSets::BlackPawns)] &= ~Utils::getBitboard(endingSquare);
+            mPieceBB[to_int(PieceSets::BlackPawns)] |= Utils::southOne(endBitboard);
+            mSquareBoard[to_int(Utils::southOne(endingSquare))] = PieceSets::BlackPawns;
         } else {
-            mPieceBB[to_int(PieceSets::WhitePawns)] |= Utils::northOne(Utils::getBitboard(endingSquare));
-            mPieceBB[to_int(PieceSets::BlackPawns)] &= ~Utils::getBitboard(endingSquare);
+            mPieceBB[to_int(PieceSets::WhitePawns)] |= Utils::northOne(endBitboard);
+            mSquareBoard[to_int(Utils::northOne(endingSquare))] = PieceSets::WhitePawns;
         }
     }
     updateRedundantBitboards();
-    updateSquareBoard();
 
     mMoveList.pop_back();
     mPinnedList.pop_back();
     mCastlingList.pop_back();
+    mEnpassantList.pop_back();
 }
 
 Bitboard ChessBoard::getPinnedPieces() const noexcept
@@ -366,38 +388,37 @@ Bitboard ChessBoard::getPinnedPieces() const noexcept
     return mPinnedPieces;
 }
 
-void ChessBoard::updateCastlingRights(PieceSets movedPiece) noexcept
+void ChessBoard::updateCastlingRights() noexcept
 {
-    mCastlingList.push_back(mCastle);
+    Bitboard whiteRooks = getWhiteRooks();
+    Bitboard blackRooks = getBlackRooks();
+    Bitboard whiteKing = getWhiteKing();
+    Bitboard blackKing = getBlackKing();
 
-    if (movedPiece == PieceSets::WhiteRooks) {
-        Bitboard whiteRooks = getWhiteRooks();
-        if (whiteRooks & Utils::getBitboard(Square::A1)) {
-            mCastle[to_int(Color::White)][to_int(Castling::Queenside)] = false;
-            return;
-        }
-        if (whiteRooks & Utils::getBitboard(Square::H1)) {
-            mCastle[to_int(Color::White)][to_int(Castling::Kingside)] = false;
-            return;
-        }
-    } else if (movedPiece == PieceSets::BlackRooks) {
-        Bitboard blackRooks = getBlackRooks();
-        if (blackRooks & Utils::getBitboard(Square::A8)) {
-            mCastle[to_int(Color::Black)][to_int(Castling::Queenside)] = false;
-            return;
-        }
-        if (blackRooks & Utils::getBitboard(Square::H8)) {
-            mCastle[to_int(Color::Black)][to_int(Castling::Kingside)] = false;
-            return;
-        }
-    } else if (movedPiece == PieceSets::WhiteKing) {
+    if (!(whiteRooks & Utils::getBitboard(Square::A1))) {
+        mCastle[to_int(Color::White)][to_int(Castling::Queenside)] = false;
+    }
+
+    if (!(whiteRooks & Utils::getBitboard(Square::H1))) {
+        mCastle[to_int(Color::White)][to_int(Castling::Kingside)] = false;
+    }
+
+    if (!(blackRooks & Utils::getBitboard(Square::A8))) {
+        mCastle[to_int(Color::Black)][to_int(Castling::Queenside)] = false;
+    }
+
+    if (!(blackRooks & Utils::getBitboard(Square::H8))) {
+        mCastle[to_int(Color::Black)][to_int(Castling::Kingside)] = false;
+    }
+
+    if (!(whiteKing & Utils::getBitboard(Square::E1))) {
         mCastle[to_int(Color::White)][to_int(Castling::Queenside)] = false;
         mCastle[to_int(Color::White)][to_int(Castling::Kingside)] = false;
-        return;
-    } else if (movedPiece == PieceSets::BlackKing) {
+    }
+
+    if (!(blackKing & Utils::getBitboard(Square::E8))) {
         mCastle[to_int(Color::Black)][to_int(Castling::Queenside)] = false;
         mCastle[to_int(Color::Black)][to_int(Castling::Kingside)] = false;
-        return;
     }
 }
 
@@ -423,48 +444,43 @@ bool ChessBoard::isLegal(const Move& move)
 
     if (type == MoveType::Castle) {
         if (endLoc > startLoc) {
-            return !(isSquareUnderAttack(startSquare, mTurn, blockers) && 
-                   isSquareUnderAttack(Utils::eastOne(startSquare), mTurn, blockers) &&
+            return !(isSquareUnderAttack(Utils::eastOne(startSquare), mTurn, blockers) ||
                    isSquareUnderAttack(endSquare, mTurn, blockers));
         } else {
-            return !(isSquareUnderAttack(startSquare, mTurn, blockers) && 
-                   isSquareUnderAttack(Utils::westOne(startSquare), mTurn, blockers) &&
+            return !(isSquareUnderAttack(Utils::westOne(startSquare), mTurn, blockers) ||
                    isSquareUnderAttack(endSquare, mTurn, blockers));
         }
     } else if (type == MoveType::Enpassant) {
         // make the move
         if (mTurn == Color::White) {
-            blockers &= ~(startLoc | Utils::southOne(endLoc));
+            blockers ^= startLoc | Utils::southOne(endLoc) | endLoc;
             mPieceBB[to_int(PieceSets::BlackPawns)] &= ~Utils::southOne(endLoc);
-            mPieceBB[to_int(PieceSets::WhitePawns)] |= endLoc;
-            mPieceBB[to_int(PieceSets::WhitePawns)] &= ~startLoc;
+            mPieceBB[to_int(PieceSets::WhitePawns)] ^= startLoc | endLoc;
         } else {
-            blockers &= ~(startLoc | Utils::northOne(endLoc));
+            blockers ^= startLoc | Utils::northOne(endLoc) | endLoc;
             mPieceBB[to_int(PieceSets::WhitePawns)] &= ~Utils::northOne(endLoc);
-            mPieceBB[to_int(PieceSets::BlackPawns)] |= endLoc;
-            mPieceBB[to_int(PieceSets::BlackPawns)] &= ~startLoc;
+            mPieceBB[to_int(PieceSets::BlackPawns)] ^= startLoc | endLoc;
         }
-        blockers |= endLoc;
-        bool legal = isKingUnderAttack(mTurn, blockers);
+
+        bool legal = !isKingUnderAttack(mTurn, blockers);
         
         // undo the move
         if (mTurn == Color::White) {
             mPieceBB[to_int(PieceSets::BlackPawns)] |= Utils::southOne(endLoc);
-            mPieceBB[to_int(PieceSets::WhitePawns)] &= ~endLoc;
-            mPieceBB[to_int(PieceSets::WhitePawns)] |= startLoc;
+            mPieceBB[to_int(PieceSets::WhitePawns)] ^= startLoc | endLoc;
         } else {
-            mPieceBB[to_int(PieceSets::BlackPawns)] |= Utils::southOne(endLoc);
-            mPieceBB[to_int(PieceSets::WhitePawns)] &= ~endLoc;
-            mPieceBB[to_int(PieceSets::WhitePawns)] |= startLoc;
+            mPieceBB[to_int(PieceSets::BlackPawns)] ^= startLoc | endLoc;
+            mPieceBB[to_int(PieceSets::WhitePawns)] |= Utils::northOne(endLoc);
         }
 
         return legal;
     } else if (mSquareBoard[to_int(startSquare)] == PieceSets::WhiteKing || mSquareBoard[to_int(startSquare)] == PieceSets::BlackKing) {
+        blockers &= ~Utils::getBitboard(startSquare);
         return !isSquareUnderAttack(endSquare, mTurn, blockers);
     }
 
     // All other move types
-    return isLegalPinnedMove(startLoc, endLoc, mTurn);
+    return isLegalPinnedMove(startSquare, endSquare, mTurn);
 }
 
 bool ChessBoard::isSquareUnderAttack(Square sq, Color turn, Bitboard blockers)
@@ -489,17 +505,18 @@ Bitboard ChessBoard::squareAttackers(Square sq, Color color, Bitboard blockers) 
 
 Bitboard ChessBoard::squareBlockers(Square sq, Color turn)
 {
+    Color enemyColor = !turn;
     Bitboard blockers = 0;
-    Bitboard enemyBishopQueens = getBishops(!turn) | getQueens(!turn);
-    Bitboard enemyRookQueens = getRooks(!turn) | getQueens(!turn);
+    Bitboard enemyBishopQueens = getBishops(enemyColor) | getQueens(enemyColor);
+    Bitboard enemyRookQueens = getRooks(enemyColor) | getQueens(enemyColor);
     Bitboard sliderAttackers = (mAttack->getBishopAttacks(sq, 0) & enemyBishopQueens) |
                                (mAttack->getRookAttacks(sq, 0) & enemyRookQueens);
-    Bitboard ownPieces = getPieces(turn);
+    Bitboard allPieces = getAllPieces();
 
     while (sliderAttackers) {
         Square sliderSquare = Utils::popLSB(sliderAttackers);
         Bitboard between = mAttack->inBetween(sq, sliderSquare);
-        between &= ownPieces;
+        between &= allPieces;
         if (Utils::isOneHot(between)) {
             blockers |= between;
         }
@@ -507,15 +524,15 @@ Bitboard ChessBoard::squareBlockers(Square sq, Color turn)
     return blockers;
 }
 
-bool ChessBoard::isLegalPinnedMove(Bitboard startLoc, Bitboard endLoc, Color turn)
+bool ChessBoard::isLegalPinnedMove(Square startSquare, Square endSquare, Color turn)
 {
-    Bitboard pinned = startLoc & getPinnedPieces();
+    Bitboard pinned = Utils::getBitboard(startSquare) & getPinnedPieces();
 
     if (!pinned) {
         return true;
     }
 
-    return mAttack->inLine(Utils::getSquare(startLoc), Utils::getSquare(endLoc)) & getKing(turn);
+    return mAttack->inLine(startSquare, endSquare) & getKing(turn);
 }
 
 void ChessBoard::updateChessBoard(const std::string& layout)
@@ -567,6 +584,13 @@ void ChessBoard::updateChessBoard(const std::string& layout)
                 break;
         }
     }
+
+    // initializing enpassant targets
+    if (fenFields[3] == "-") {
+        mEnpassantTarget = 0;
+    } else {
+        mEnpassantTarget = Utils::getBitboard(Square(8 * (fenFields[3][1] - '1') + (fenFields[3][0] - 'a')));
+    }
     updateSquareBoard();
     updatePinnedPieces(mTurn);
 }
@@ -579,4 +603,20 @@ bool ChessBoard::isKingUnderAttack(Color turn, Bitboard blockers)
 Bitboard ChessBoard::getKingAttackers(Color turn, Bitboard blockers)
 {
     return squareAttackers(Utils::getSquare(getKing(turn)), !turn, blockers);
+}
+
+Bitboard ChessBoard::getEnpassantTarget() const noexcept
+{
+    return mEnpassantTarget;
+}
+
+bool ChessBoard::validateSquareBoard() const
+{
+    for (Square sq = Square::A1; sq != Square::Null; ++sq) {
+        PieceSets piece = mSquareBoard[to_int(sq)];
+        if (!(mPieceBB[to_int(piece)] & Utils::getBitboard(sq))){
+            return false;
+        }
+    }
+    return true;
 }

@@ -11,43 +11,35 @@
 class MoveGen
 {
 public:
-    MoveGen(std::shared_ptr<ChessBoard> src, std::shared_ptr<Attack> attack);
+    MoveGen(ChessBoard* src, Attack* attack);
     ~MoveGen() = default;
     MoveGen(const MoveGen& rhs) = default;
     MoveGen& operator=(const MoveGen& rhs) = default;
 
     void generatePseudoLegalMoves();
-    void generateLegalMoves();
+    std::vector<Move> generateLegalMoves();
 
-    std::vector<Move> getMoves() const noexcept;
 private:
-    std::shared_ptr<Attack> mAttack;
-    std::vector<Move> mMoves;
-    std::shared_ptr<ChessBoard> mBoard;
+    Attack* mAttack;
+    ChessBoard* mBoard;
 
     // Legal Move Generation, not escaping check
-    void generateLegalNonEvasivePawnMoves(Color color);
-    void generateLegalNonEvasiveWhitePawnMoves();
-    void generateLegalNonEvasiveBlackPawnMoves();
-    void generateLegalNonEvasiveKnightMoves(Color color);
-    void generateLegalNonEvasiveBishopMoves(Color color);
-    void generateLegalNonEvasiveRookMoves(Color color);
-    void generateLegalNonEvasiveQueenMoves(Color color);
-    void generateLegalKingMoves(Color color);
+    void generateLegalNonEvasivePawnMoves(Color color, std::vector<Move>& moveList);
+    void generateLegalNonEvasiveWhitePawnMoves(std::vector<Move>& moveList);
+    void generateLegalNonEvasiveBlackPawnMoves(std::vector<Move>& moveList);
+    void generateLegalNonEvasiveKnightMoves(Color color, std::vector<Move>& moveList);
+    void generateLegalNonEvasiveBishopMoves(Color color, std::vector<Move>& moveList);
+    void generateLegalNonEvasiveRookMoves(Color color, std::vector<Move>& moveList);
+    void generateLegalNonEvasiveQueenMoves(Color color, std::vector<Move>& moveList);
+    void generateLegalKingMoves(Color color, std::vector<Move>& moveList);
 
     // Legal Move Generation, escaping check
-    void generateLegalEvasivePawnMoves(Color color, Bitboard checkers);
-    void generateLegalEvasiveWhitePawnMoves(Bitboard checkers);
-    void generateLegalEvasiveBlackPawnMoves(Bitboard checkers);
-    void generateLegalEvasiveKnightMoves(Color color, Bitboard checkers);
-    void generateLegalEvasiveBishopMoves(Color color, Bitboard checkers);
-    void generateLegalEvasiveRookMoves(Color color, Bitboard checkers);
-    void generateLegalEvasiveQueenMoves(Color color, Bitboard checkers);
-    void generateLegalEvasiveKingMoves(Color color, Bitboard checkers);
-
-    bool isLegal(const Move& move, Color color);
-    bool legalPinnedMove(Bitboard startLoc, Bitboard endLoc, Bitboard blockers);
-    bool isSquareUnderAttack(Square sq, Color color, Bitboard blockers);
-    Bitboard getWhiteAttacks(Bitboard blockers);
-    Bitboard getBlackAttacks(Bitboard blockers);
+    void generateLegalEvasivePawnMoves(Color color, Bitboard checkers, std::vector<Move>& moveList);
+    void generateLegalEvasiveWhitePawnMoves(Bitboard checkers, std::vector<Move>& moveList);
+    void generateLegalEvasiveBlackPawnMoves(Bitboard checkers, std::vector<Move>& moveList);
+    void generateLegalEvasiveKnightMoves(Color color, Bitboard checkers, std::vector<Move>& moveList);
+    void generateLegalEvasiveBishopMoves(Color color, Bitboard checkers, std::vector<Move>& moveList);
+    void generateLegalEvasiveRookMoves(Color color, Bitboard checkers, std::vector<Move>& moveList);
+    void generateLegalEvasiveQueenMoves(Color color, Bitboard checkers, std::vector<Move>& moveList);
+    void generateLegalEvasiveKingMoves(Color color, Bitboard checkers, std::vector<Move>& moveList);
 };

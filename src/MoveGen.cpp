@@ -1,46 +1,46 @@
 #include "MoveGen.h"
 
-MoveGen::MoveGen(std::shared_ptr<ChessBoard> src, std::shared_ptr<Attack> attack) 
-    : mAttack(attack), mMoves{}, mBoard(src)
+MoveGen::MoveGen(ChessBoard* src, Attack* attack) 
+    : mAttack(attack), mBoard(src)
 {
 }
 
-void MoveGen::generateLegalMoves()
+std::vector<Move> MoveGen::generateLegalMoves()
 {
-    mMoves.clear();
+    std::vector<Move> moveList;
+    moveList.reserve(240);
+
     Color toMove = mBoard->getTurn();
     Bitboard checkers = mBoard->getKingAttackers(toMove, mBoard->getAllPieces());
 
     if (checkers) {
-        generateLegalEvasivePawnMoves(toMove, checkers);
-        generateLegalEvasiveKnightMoves(toMove, checkers);
-        generateLegalEvasiveBishopMoves(toMove, checkers);
-        generateLegalEvasiveRookMoves(toMove, checkers);
-        generateLegalEvasiveQueenMoves(toMove, checkers);
+        generateLegalEvasivePawnMoves(toMove, checkers, moveList);
+        generateLegalEvasiveKnightMoves(toMove, checkers, moveList);
+        generateLegalEvasiveBishopMoves(toMove, checkers, moveList);
+        generateLegalEvasiveRookMoves(toMove, checkers, moveList);
+        generateLegalEvasiveQueenMoves(toMove, checkers, moveList);
     } else {
-        generateLegalNonEvasivePawnMoves(toMove);
-        generateLegalNonEvasiveKnightMoves(toMove);
-        generateLegalNonEvasiveBishopMoves(toMove);
-        generateLegalNonEvasiveRookMoves(toMove);
-        generateLegalNonEvasiveQueenMoves(toMove);
+        generateLegalNonEvasivePawnMoves(toMove, moveList);
+        generateLegalNonEvasiveKnightMoves(toMove, moveList);
+        generateLegalNonEvasiveBishopMoves(toMove, moveList);
+        generateLegalNonEvasiveRookMoves(toMove, moveList);
+        generateLegalNonEvasiveQueenMoves(toMove, moveList);
     }
-    generateLegalKingMoves(toMove);
+    generateLegalKingMoves(toMove, moveList);
+
+    return moveList;
 }
 
-std::vector<Move> MoveGen::getMoves() const noexcept
+void MoveGen::generateLegalNonEvasivePawnMoves(Color color, std::vector<Move>& moveList)
 {
-    return mMoves;
+    color == Color::White ? generateLegalNonEvasiveWhitePawnMoves(moveList) : generateLegalNonEvasiveBlackPawnMoves(moveList);
 }
 
-void MoveGen::generateLegalNonEvasivePawnMoves(Color color)
-{
-    color == Color::White ? generateLegalNonEvasiveWhitePawnMoves() : generateLegalNonEvasiveBlackPawnMoves();
-}
-
-void MoveGen::generateLegalNonEvasiveWhitePawnMoves()
+void MoveGen::generateLegalNonEvasiveWhitePawnMoves(std::vector<Move>& moveList)
 {
     Bitboard pawns = mBoard->getWhitePawns();
     Bitboard enemyPieces = mBoard->getBlackPieces();
+    Bitboard enpassantTarget = mBoard->getEnpassantTarget();
 
     // pawn pushes
     Bitboard onePawnPush = Utils::northOne(pawns) & mBoard->getEmptySquares();
@@ -49,15 +49,15 @@ void MoveGen::generateLegalNonEvasiveWhitePawnMoves()
         Square endSquare = Utils::popLSB(onePawnPush);
         if (Utils::getBitboard(endSquare) & Utils::EIGHTH_RANK) {
             if (mBoard->isLegal(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen))) {
-                mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen));
-                mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Rook));
-                mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Bishop));
-                mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Knight));
+                moveList.emplace_back(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen);
+                moveList.emplace_back(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Rook);
+                moveList.emplace_back(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Bishop);
+                moveList.emplace_back(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Knight);
             }
         } else {
             Move move(Utils::southOne(endSquare), endSquare, MoveType::Quiet);
             if (mBoard->isLegal(move)) {
-                mMoves.push_back(move);
+                moveList.push_back(move);
             }
         }
     }
@@ -65,36 +65,44 @@ void MoveGen::generateLegalNonEvasiveWhitePawnMoves()
         Square endSquare = Utils::popLSB(twoPawnPush);
         Move move(Utils::southOne(Utils::southOne(endSquare)), endSquare, MoveType::Quiet);
         if (mBoard->isLegal(move)) {
-            mMoves.push_back(move);
+            moveList.push_back(move);
         }
     }
     while (pawns) {
         Square startSquare = Utils::popLSB(pawns);
         Bitboard attacks = mAttack->getPawnAttacks(startSquare, Color::White);
+        if (attacks & enpassantTarget) {
+            Move move(startSquare, Utils::getSquare(enpassantTarget), MoveType::Enpassant);
+            if (mBoard->isLegal(move)) {
+                moveList.push_back(move);
+            }
+        }
+
         attacks &= enemyPieces;
         while (attacks) {
             Square endSquare = Utils::popLSB(attacks);
             if (Utils::getBitboard(endSquare) & Utils::EIGHTH_RANK) {
                 if (mBoard->isLegal(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen))) {
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen));
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Rook));
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Bishop));
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Knight));
+                moveList.emplace_back(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen);
+                moveList.emplace_back(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Rook);
+                moveList.emplace_back(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Bishop);
+                moveList.emplace_back(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Knight);
                 }
             } else {
                 Move move(startSquare, endSquare, MoveType::Quiet);
                 if (mBoard->isLegal(move)) {
-                    mMoves.push_back(move);
+                    moveList.push_back(move);
                 }
             }
         }
     }
 }
 
-void MoveGen::generateLegalNonEvasiveBlackPawnMoves()
+void MoveGen::generateLegalNonEvasiveBlackPawnMoves(std::vector<Move>& moveList)
 {
     Bitboard pawns = mBoard->getBlackPawns();
     Bitboard enemyPieces = mBoard->getWhitePieces();
+    Bitboard enpassantTarget = mBoard->getEnpassantTarget();
 
     // pawn pushes
     Bitboard onePawnPush = Utils::southOne(pawns) & mBoard->getEmptySquares();
@@ -103,15 +111,15 @@ void MoveGen::generateLegalNonEvasiveBlackPawnMoves()
         Square endSquare = Utils::popLSB(onePawnPush);
         if (Utils::getBitboard(endSquare) & Utils::FIRST_RANK) {
             if (mBoard->isLegal(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen))) {
-                mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen));
-                mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Rook));
-                mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Bishop));
-                mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Knight));
+                moveList.emplace_back(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen);
+                moveList.emplace_back(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Rook);
+                moveList.emplace_back(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Bishop);
+                moveList.emplace_back(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Knight);
             }
         } else {
             Move move(Utils::northOne(endSquare), endSquare, MoveType::Quiet);
             if (mBoard->isLegal(move)) {
-                mMoves.push_back(move);
+                moveList.push_back(move);
             }
         }
     }
@@ -119,33 +127,39 @@ void MoveGen::generateLegalNonEvasiveBlackPawnMoves()
         Square endSquare = Utils::popLSB(twoPawnPush);
         Move move(Utils::northOne(Utils::northOne(endSquare)), endSquare, MoveType::Quiet);
         if (mBoard->isLegal(move)) {
-            mMoves.push_back(move);
+            moveList.push_back(move);
         }
     }
     while (pawns) {
         Square startSquare = Utils::popLSB(pawns);
         Bitboard attacks = mAttack->getPawnAttacks(startSquare, Color::Black);
+        if (attacks & enpassantTarget) {
+            Move move(startSquare, Utils::getSquare(enpassantTarget), MoveType::Enpassant);
+            if (mBoard->isLegal(move)) {
+                moveList.push_back(move);
+            }
+        }
         attacks &= enemyPieces;
         while (attacks) {
             Square endSquare = Utils::popLSB(attacks);
             if (Utils::getBitboard(endSquare) & Utils::FIRST_RANK) {
                 if (mBoard->isLegal(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen))) {
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen));
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Rook));
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Bishop));
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Knight));
+                moveList.emplace_back(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen);
+                moveList.emplace_back(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Rook);
+                moveList.emplace_back(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Bishop);
+                moveList.emplace_back(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Knight);
                 }
             } else {
                 Move move(startSquare, endSquare, MoveType::Quiet);
                 if (mBoard->isLegal(move)) {
-                    mMoves.push_back(move);
+                    moveList.push_back(move);
                 }
             }
         }
     }
 }
 
-void MoveGen::generateLegalNonEvasiveKnightMoves(Color color)
+void MoveGen::generateLegalNonEvasiveKnightMoves(Color color, std::vector<Move>& moveList)
 {
     Bitboard knights = mBoard->getKnights(color);
     Bitboard blockers = mBoard->getPieces(color);
@@ -157,13 +171,13 @@ void MoveGen::generateLegalNonEvasiveKnightMoves(Color color)
         while (attacks) {
             Move move(startSquare, Utils::popLSB(attacks), MoveType::Quiet);
             if (mBoard->isLegal(move)) {
-                mMoves.push_back(move);
+                moveList.push_back(move);
             }
         }
     }
 }
 
-void MoveGen::generateLegalNonEvasiveBishopMoves(Color color)
+void MoveGen::generateLegalNonEvasiveBishopMoves(Color color, std::vector<Move>& moveList)
 {
     Bitboard bishops = mBoard->getBishops(color);
     Bitboard blockers = mBoard->getAllPieces();
@@ -176,13 +190,13 @@ void MoveGen::generateLegalNonEvasiveBishopMoves(Color color)
         while (attacks) {
             Move move(startSquare, Utils::popLSB(attacks), MoveType::Quiet);
             if (mBoard->isLegal(move)) {
-                mMoves.push_back(move);
+                moveList.push_back(move);
             }
         }
     }
 }
 
-void MoveGen::generateLegalNonEvasiveRookMoves(Color color)
+void MoveGen::generateLegalNonEvasiveRookMoves(Color color, std::vector<Move>& moveList)
 {
     Bitboard rooks = mBoard->getRooks(color);
     Bitboard blockers = mBoard->getAllPieces();
@@ -195,13 +209,13 @@ void MoveGen::generateLegalNonEvasiveRookMoves(Color color)
         while (attacks) {
             Move move(startSquare, Utils::popLSB(attacks), MoveType::Quiet);
             if (mBoard->isLegal(move)) {
-                mMoves.push_back(move);
+                moveList.push_back(move);
             }
         }
     }
 }
 
-void MoveGen::generateLegalNonEvasiveQueenMoves(Color color)
+void MoveGen::generateLegalNonEvasiveQueenMoves(Color color, std::vector<Move>& moveList)
 {
     Bitboard queens = mBoard->getQueens(color);
     Bitboard blockers = mBoard->getAllPieces();
@@ -214,18 +228,19 @@ void MoveGen::generateLegalNonEvasiveQueenMoves(Color color)
         while (attacks) {
             Move move(startSquare, Utils::popLSB(attacks), MoveType::Quiet);
             if (mBoard->isLegal(move)) {
-                mMoves.push_back(move);
+                moveList.push_back(move);
             }
         }
     }
 }
 
-void MoveGen::generateLegalKingMoves(Color color)
+void MoveGen::generateLegalKingMoves(Color color, std::vector<Move>& moveList)
 {
     Bitboard king = mBoard->getKing(color);
     bool kingsideRights = mBoard->getCastleRights(Castling::Kingside, color);
     bool queensideRights = mBoard->getCastleRights(Castling::Queenside, color);
     Bitboard blockers = mBoard->getPieces(color);
+    Bitboard allPieces = mBoard->getAllPieces();
 
     Square startSquare = Utils::popLSB(king);
     Bitboard attacks = mAttack->getKingAttacks(startSquare);
@@ -233,45 +248,51 @@ void MoveGen::generateLegalKingMoves(Color color)
     while (attacks) {
         Move move(startSquare, Utils::popLSB(attacks), MoveType::Quiet);
         if (mBoard->isLegal(move)) {
-            mMoves.push_back(move);
+            moveList.push_back(move);
         }
     }
 
-    if (!mBoard->isKingUnderAttack(color, blockers)) {
+    if (!mBoard->isKingUnderAttack(color, allPieces)) {
         // Castling
         Bitboard startBitboard = Utils::getBitboard(startSquare);
         if (kingsideRights) {
             Bitboard kingsideOne = Utils::eastOne(startBitboard);
             Bitboard kingsideTwo = Utils::eastOne(kingsideOne);
-            if (kingsideOne & ~blockers && kingsideTwo & ~blockers) {
+            if (!((kingsideOne | kingsideTwo) & allPieces)) {
                 Move move(startSquare, Utils::getSquare(kingsideTwo), MoveType::Castle);
                 if (mBoard->isLegal(move)) {
-                    mMoves.push_back(move);
+                    moveList.push_back(move);
                 }
             }
         }
         if (queensideRights) {
             Bitboard queensideOne = Utils::westOne(startBitboard);
             Bitboard queensideTwo = Utils::westOne(queensideOne);
-            if (queensideOne & ~blockers && queensideTwo & ~blockers) {
+            Bitboard queensideThree = Utils::westOne(queensideTwo);
+            if (!((queensideOne | queensideTwo | queensideThree) & allPieces)) {
                 Move move(startSquare, Utils::getSquare(queensideTwo), MoveType::Castle);
                 if (mBoard->isLegal(move)) {
-                     mMoves.push_back(move);
+                     moveList.push_back(move);
                 }
             }
         }
     }
 }
 
-void MoveGen::generateLegalEvasivePawnMoves(Color color, Bitboard checkers)
+void MoveGen::generateLegalEvasivePawnMoves(Color color, Bitboard checkers, std::vector<Move>& moveList)
 {
-    color == Color::White ? generateLegalEvasiveWhitePawnMoves(checkers) : generateLegalEvasiveBlackPawnMoves(checkers);
+    color == Color::White ? generateLegalEvasiveWhitePawnMoves(checkers, moveList) : generateLegalEvasiveBlackPawnMoves(checkers, moveList);
 }
 
-void MoveGen::generateLegalEvasiveWhitePawnMoves(Bitboard checkers)
+void MoveGen::generateLegalEvasiveWhitePawnMoves(Bitboard checkers, std::vector<Move>& moveList)
 {
+    if (!Utils::isOneHot(checkers)) {
+        return;
+    }
+
     Bitboard pawns = mBoard->getWhitePawns();
     Square kingSquare = Utils::getSquare(mBoard->getKing(Color::White));
+    Bitboard enpassantTarget = mBoard->getEnpassantTarget();
 
     // pawn pushes
     Bitboard onePawnPush = Utils::northOne(pawns) & mBoard->getEmptySquares();
@@ -281,15 +302,15 @@ void MoveGen::generateLegalEvasiveWhitePawnMoves(Bitboard checkers)
         if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare)) {
             if (Utils::getBitboard(endSquare) & Utils::EIGHTH_RANK) {
                 if (mBoard->isLegal(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen))) {
-                    mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen));
-                    mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Rook));
-                    mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Bishop));
-                    mMoves.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Knight));
+                    moveList.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen));
+                    moveList.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Rook));
+                    moveList.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Bishop));
+                    moveList.push_back(Move(Utils::southOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Knight));
                 }
             } else {
                 Move move(Utils::southOne(endSquare), endSquare, MoveType::Quiet);
                 if (mBoard->isLegal(move)) {
-                    mMoves.push_back(move);
+                    moveList.push_back(move);
                 }
             }
         }
@@ -299,37 +320,48 @@ void MoveGen::generateLegalEvasiveWhitePawnMoves(Bitboard checkers)
         if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare)) {
             Move move(Utils::southOne(Utils::southOne(endSquare)), endSquare, MoveType::Quiet);
             if (mBoard->isLegal(move)) {
-                mMoves.push_back(move);
+                moveList.push_back(move);
             }
         }
     }
     while (pawns) {
         Square startSquare = Utils::popLSB(pawns);
         Bitboard attacks = mAttack->getPawnAttacks(startSquare, Color::White);
+        if (attacks & enpassantTarget) {
+            Move move(startSquare, Utils::getSquare(enpassantTarget), MoveType::Enpassant);
+            if (mBoard->isLegal(move)) {
+                moveList.push_back(move);
+            }
+        }
         attacks &= checkers;
         while (attacks) {
             Square endSquare = Utils::popLSB(attacks);
             if (Utils::getBitboard(endSquare) & Utils::EIGHTH_RANK) {
                 if (mBoard->isLegal(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen))) {
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen));
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Rook));
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Bishop));
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Knight));
+                moveList.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen));
+                moveList.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Rook));
+                moveList.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Bishop));
+                moveList.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Knight));
                 }
             } else {
                 Move move(startSquare, endSquare, MoveType::Quiet);
                 if (mBoard->isLegal(move)) {
-                    mMoves.push_back(move);
+                    moveList.push_back(move);
                 }
             }
         }
     }
 }
 
-void MoveGen::generateLegalEvasiveBlackPawnMoves(Bitboard checkers)
+void MoveGen::generateLegalEvasiveBlackPawnMoves(Bitboard checkers, std::vector<Move>& moveList)
 {
+    if (!Utils::isOneHot(checkers)) {
+        return;
+    }
+
     Bitboard pawns = mBoard->getBlackPawns();
     Square kingSquare = Utils::getSquare(mBoard->getKing(Color::Black));
+    Bitboard enpassantTarget = mBoard->getEnpassantTarget();
 
     // pawn pushes
     Bitboard onePawnPush = Utils::southOne(pawns) & mBoard->getEmptySquares();
@@ -339,15 +371,15 @@ void MoveGen::generateLegalEvasiveBlackPawnMoves(Bitboard checkers)
         if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare)) {
             if (Utils::getBitboard(endSquare) & Utils::FIRST_RANK) {
                 if (mBoard->isLegal(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen))) {
-                    mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen));
-                    mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Rook));
-                    mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Bishop));
-                    mMoves.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Knight));
+                    moveList.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Queen));
+                    moveList.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Rook));
+                    moveList.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Bishop));
+                    moveList.push_back(Move(Utils::northOne(endSquare), endSquare, MoveType::Promotion, PromotionPiece::Knight));
                 }
             } else {
                 Move move(Utils::northOne(endSquare), endSquare, MoveType::Quiet);
                 if (mBoard->isLegal(move)) {
-                    mMoves.push_back(move);
+                    moveList.push_back(move);
                 }
             }
         }
@@ -357,33 +389,40 @@ void MoveGen::generateLegalEvasiveBlackPawnMoves(Bitboard checkers)
         if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare)) {
             Move move(Utils::northOne(Utils::northOne(endSquare)), endSquare, MoveType::Quiet);
             if (mBoard->isLegal(move)) {
-                mMoves.push_back(move);
+                moveList.push_back(move);
             }
         }
     }
     while (pawns) {
         Square startSquare = Utils::popLSB(pawns);
         Bitboard attacks = mAttack->getPawnAttacks(startSquare, Color::Black);
+        if (attacks & enpassantTarget) {
+            Move move(startSquare, Utils::getSquare(enpassantTarget), MoveType::Enpassant);
+            if (mBoard->isLegal(move)) {
+                moveList.push_back(move);
+            }
+        }
         attacks &= checkers;
         while (attacks) {
             Square endSquare = Utils::popLSB(attacks);
             if (Utils::getBitboard(endSquare) & Utils::FIRST_RANK) {
                 if (mBoard->isLegal(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen))) {
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen));
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Rook));
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Bishop));
-                mMoves.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Knight));
+                moveList.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Queen));
+                moveList.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Rook));
+                moveList.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Bishop));
+                moveList.push_back(Move(startSquare, endSquare, MoveType::Promotion, PromotionPiece::Knight));
                 }
             } else {
                 Move move(startSquare, endSquare, MoveType::Quiet);
                 if (mBoard->isLegal(move)) {
-                    mMoves.push_back(move);
+                    moveList.push_back(move);
                 }
             }
         }
     }
 }
-void MoveGen::generateLegalEvasiveKnightMoves(Color color, Bitboard checkers)
+
+void MoveGen::generateLegalEvasiveKnightMoves(Color color, Bitboard checkers, std::vector<Move>& moveList)
 {
     if (!Utils::isOneHot(checkers)) {
         return;
@@ -399,17 +438,17 @@ void MoveGen::generateLegalEvasiveKnightMoves(Color color, Bitboard checkers)
         attacks &= ~blockers;
         while (attacks) {
             Square endSquare = Utils::popLSB(attacks);
-            if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare) || attacks & checkers) {
+            if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare) || Utils::getBitboard(endSquare) & checkers) {
                 Move move(startSquare, endSquare, MoveType::Quiet);
                 if (mBoard->isLegal(move)) {
-                    mMoves.push_back(move);
+                    moveList.push_back(move);
                 }
             }
         }
     }
 }
 
-void MoveGen::generateLegalEvasiveBishopMoves(Color color, Bitboard checkers)
+void MoveGen::generateLegalEvasiveBishopMoves(Color color, Bitboard checkers, std::vector<Move>& moveList)
 {
     if (!Utils::isOneHot(checkers)) {
         return;
@@ -426,17 +465,17 @@ void MoveGen::generateLegalEvasiveBishopMoves(Color color, Bitboard checkers)
         attacks &= ~ownPieces;
         while (attacks) {
             Square endSquare = Utils::popLSB(attacks);
-            if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare) || attacks & checkers) {
+            if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare) || Utils::getBitboard(endSquare) & checkers) {
                 Move move(startSquare, endSquare, MoveType::Quiet);
                 if (mBoard->isLegal(move)) {
-                    mMoves.push_back(move);
+                    moveList.push_back(move);
                 }
             }
         }
     }
 }
 
-void MoveGen::generateLegalEvasiveRookMoves(Color color, Bitboard checkers) 
+void MoveGen::generateLegalEvasiveRookMoves(Color color, Bitboard checkers, std::vector<Move>& moveList) 
 {
     if (!Utils::isOneHot(checkers)) {
         return;
@@ -453,17 +492,17 @@ void MoveGen::generateLegalEvasiveRookMoves(Color color, Bitboard checkers)
         attacks &= ~ownPieces;
         while (attacks) {
             Square endSquare = Utils::popLSB(attacks);
-            if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare) || attacks & checkers) {
+            if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare) || Utils::getBitboard(endSquare) & checkers) {
                 Move move(startSquare, endSquare, MoveType::Quiet);
                 if (mBoard->isLegal(move)) {
-                    mMoves.push_back(move);
+                    moveList.push_back(move);
                 }
             }
         }
     }
 }
 
-void MoveGen::generateLegalEvasiveQueenMoves(Color color, Bitboard checkers)
+void MoveGen::generateLegalEvasiveQueenMoves(Color color, Bitboard checkers, std::vector<Move>& moveList)
 {
     if (!Utils::isOneHot(checkers)) {
         return;
@@ -480,10 +519,10 @@ void MoveGen::generateLegalEvasiveQueenMoves(Color color, Bitboard checkers)
         attacks &= ~ownPieces;
         while (attacks) {
             Square endSquare = Utils::popLSB(attacks);
-            if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare) || attacks & checkers) {
+            if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare) || Utils::getBitboard(endSquare) & checkers) {
                 Move move(startSquare, endSquare, MoveType::Quiet);
                 if (mBoard->isLegal(move)) {
-                    mMoves.push_back(move);
+                    moveList.push_back(move);
                 }
             }
         }
