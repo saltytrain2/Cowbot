@@ -1,7 +1,7 @@
 #include "Utils.h"
 
 // debruijn lookup for determining index of LSB
-constexpr Square SQUARE_LOOKUP[64] = {
+static constexpr Square SQUARE_LOOKUP[64] = {
     Square::A1, Square::H6, Square::B1, Square::A8, Square::A7, Square::D4, 
     Square::C1, Square::E8, Square::B8, Square::B7, Square::B6, Square::F5, 
     Square::E4, Square::A3, Square::D1, Square::F8, Square::G7, Square::C8, 

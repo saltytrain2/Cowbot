@@ -1,3 +1,4 @@
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
 #include <cstdint>
@@ -51,8 +52,29 @@ uint64_t perft(MoveGen* moveGen, ChessBoard* board, int depth)
 
 TEST_CASE("Perft") {
     auto attack = std::make_shared<Attack>();
+    attack->initTables();
     auto board = std::make_shared<ChessBoard>(attack.get());
     auto moveGen = std::make_shared<MoveGen>(board.get(), attack.get());
+
+    // SUBCASE("Debug") {
+    //     board->updateChessBoard("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1");
+    //     board->printSquareBoard();
+    //     CHECK(board->isLegal(Move(Square::B5, Square::B6, MoveType::Quiet)) == false);
+    //     // Move move(Square::A2, Square::A3, MoveType::Quiet);
+    //     // board->makeMove(move);
+    //     // move.updateMove("b4b3");
+    //     // board->makeMove(move);
+    //     // move.updateMove("g6h8");
+    //     // board->makeMove(move);
+    //     perft(moveGen.get(), board.get(), 1);
+    //     CHECK(board->getWhitePawns() == 0x200005000);
+    //     CHECK(board->getWhiteRooks() == 0x2000000);
+    //     CHECK(board->getWhiteKing() == 0x100000000);
+    //     CHECK(board->getBlackPawns() == 0x4080020000000);
+    //     CHECK(board->getBlackRooks() == 0x8000000000);
+    //     CHECK(board->getBlackKing() == 0x80000000);
+    //     perft(moveGen.get(), board.get(), 2);
+    // }
 
     SUBCASE("First Game") {
         board->updateChessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");

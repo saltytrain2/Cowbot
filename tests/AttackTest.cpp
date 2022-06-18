@@ -1,3 +1,4 @@
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
 #include <memory>
@@ -6,6 +7,7 @@
 
 TEST_CASE("Attack Bitboards") {
     auto attackBoards = std::make_shared<Attack>();
+    attackBoards->initTables();
 
     SUBCASE("Pawn Bitboards") {
         CHECK(attackBoards->getPawnAttacks(Square::A2, Color::White) == 0x20000);

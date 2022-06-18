@@ -4,7 +4,7 @@
 
 // magics taken from shallow blue https://github.com/GunshipPenguin/shallow-blue
 // TODO create custom magics
-constexpr uint64_t ROOK_MAGICS[64] = {
+static constexpr uint64_t ROOK_MAGICS[64] = {
     0xa8002c000108020ULL, 0x6c00049b0002001ULL, 0x100200010090040ULL, 0x2480041000800801ULL, 0x280028004000800ULL,
     0x900410008040022ULL, 0x280020001001080ULL, 0x2880002041000080ULL, 0xa000800080400034ULL, 0x4808020004000ULL,
     0x2290802004801000ULL, 0x411000d00100020ULL, 0x402800800040080ULL, 0xb000401004208ULL, 0x2409000100040200ULL,
@@ -20,7 +20,7 @@ constexpr uint64_t ROOK_MAGICS[64] = {
     0x489a000810200402ULL, 0x1004400080a13ULL, 0x4000011008020084ULL, 0x26002114058042ULL
 };
 
-constexpr uint64_t BISHOP_MAGICS[64] = {
+static constexpr uint64_t BISHOP_MAGICS[64] = {
     0x89a1121896040240ULL, 0x2004844802002010ULL, 0x2068080051921000ULL, 0x62880a0220200808ULL, 0x4042004000000ULL,
     0x100822020200011ULL, 0xc00444222012000aULL, 0x28808801216001ULL, 0x400492088408100ULL, 0x201c401040c0084ULL,
     0x840800910a0010ULL, 0x82080240060ULL, 0x2000840504006000ULL, 0x30010c4108405004ULL, 0x1008005410080802ULL,
@@ -36,7 +36,7 @@ constexpr uint64_t BISHOP_MAGICS[64] = {
     0x1000042304105ULL, 0x10008830412a00ULL, 0x2520081090008908ULL, 0x40102000a0a60140ULL,
 };
 
-constexpr uint8_t BISHOP_SHIFTS[64] = {
+static constexpr uint8_t BISHOP_SHIFTS[64] = {
     6, 5, 5, 5, 5, 5, 5, 6,
     5, 5, 5, 5, 5, 5, 5, 5,
     5, 5, 7, 7, 7, 7, 5, 5,
@@ -47,7 +47,7 @@ constexpr uint8_t BISHOP_SHIFTS[64] = {
     6, 5, 5, 5, 5, 5, 5, 6
 };
 
-constexpr uint8_t ROOK_SHIFTS[64] = {
+static constexpr uint8_t ROOK_SHIFTS[64] = {
     12, 11, 11, 11, 11, 11, 11, 12,
     11, 10, 10, 10, 10, 10, 10, 11,
     11, 10, 10, 10, 10, 10, 10, 11,
@@ -58,7 +58,17 @@ constexpr uint8_t ROOK_SHIFTS[64] = {
     12, 11, 11, 11, 11, 11, 11, 12
 };
 
-Attack::Attack()
+Bitboard Attack::mBishopMasks[64];
+Bitboard Attack::mRookMasks[64];
+Bitboard Attack::mPawnAttacks[2][64];
+Bitboard Attack::mKingAttacks[64];
+Bitboard Attack::mKnightAttacks[64];
+Bitboard Attack::mBishopAttacks[64][512];
+Bitboard Attack::mRookAttacks[64][4096];
+Bitboard Attack::mBetweenRectangular[64][64];
+Bitboard Attack::mLined[64][64];
+
+void Attack::initTables()
 {
     initPawnAttacks();
     initKingAttacks();
@@ -69,7 +79,7 @@ Attack::Attack()
     initLinedTable();
 }
 
-Bitboard Attack::getMaskedBlockers(Bitboard mask, uint16_t index)
+Bitboard Attack::getMaskedBlockers(Bitboard mask, uint16_t index) const
 {
     Bitboard blockers = 0;
 
@@ -142,22 +152,22 @@ void Attack::initRookAttacks()
     }
 }
 
-Bitboard Attack::getPawnAttacks(Square sq, Color color)
+Bitboard Attack::getPawnAttacks(Square sq, Color color) const
 {
     return mPawnAttacks[to_int(color)][to_int(sq)];
 }
 
-Bitboard Attack::getKingAttacks(Square sq)
+Bitboard Attack::getKingAttacks(Square sq) const
 {
     return mKingAttacks[to_int(sq)];
 }
 
-Bitboard Attack::getKnightAttacks(Square sq)
+Bitboard Attack::getKnightAttacks(Square sq) const
 {
     return mKnightAttacks[to_int(sq)];
 }
 
-Bitboard Attack::getBishopAttacks(Square sq, Bitboard blockers)
+Bitboard Attack::getBishopAttacks(Square sq, Bitboard blockers) const
 {
     blockers &= mBishopMasks[to_int(sq)];
     blockers *= BISHOP_MAGICS[to_int(sq)];
@@ -165,7 +175,7 @@ Bitboard Attack::getBishopAttacks(Square sq, Bitboard blockers)
     return mBishopAttacks[to_int(sq)][blockers];
 }
 
-Bitboard Attack::getRookAttacks(Square sq, Bitboard blockers)
+Bitboard Attack::getRookAttacks(Square sq, Bitboard blockers) const
 {
     blockers &= mRookMasks[to_int(sq)];
     blockers *= ROOK_MAGICS[to_int(sq)];
@@ -173,12 +183,12 @@ Bitboard Attack::getRookAttacks(Square sq, Bitboard blockers)
     return mRookAttacks[to_int(sq)][blockers];
 }
 
-Bitboard Attack::getQueenAttacks(Square sq, Bitboard blockers)
+Bitboard Attack::getQueenAttacks(Square sq, Bitboard blockers) const
 {
     return getBishopAttacks(sq, blockers) | getRookAttacks(sq, blockers);
 }
 
-Bitboard Attack::calcKingAttacks(Bitboard kingLoc)
+Bitboard Attack::calcKingAttacks(Bitboard kingLoc) const
 {
     Bitboard attacks = Utils::eastOne(kingLoc) | Utils::westOne(kingLoc);
     kingLoc |= attacks;
@@ -186,7 +196,7 @@ Bitboard Attack::calcKingAttacks(Bitboard kingLoc)
     return attacks;
 }
 
-Bitboard Attack::calcKnightAttacks(Bitboard knightLoc)
+Bitboard Attack::calcKnightAttacks(Bitboard knightLoc) const
 {
     Bitboard east = Utils::eastOne(knightLoc);
     Bitboard west = Utils::westOne(knightLoc);
@@ -197,7 +207,7 @@ Bitboard Attack::calcKnightAttacks(Bitboard knightLoc)
     return attacks;
 }   
 
-Bitboard Attack::getSlidingMasks(PieceSets piece, Square sq)
+Bitboard Attack::getSlidingMasks(PieceSets piece, Square sq) const
 {
     Bitboard attacks = 0;
 
@@ -240,7 +250,7 @@ Bitboard Attack::getSlidingMasks(PieceSets piece, Square sq)
     return attacks;
 }
 
-Bitboard Attack::calcBishopAttacks(Square sq, Bitboard blockers)
+Bitboard Attack::calcBishopAttacks(Square sq, Bitboard blockers) const
 {
     Bitboard attacks = 0;
 
@@ -271,7 +281,7 @@ Bitboard Attack::calcBishopAttacks(Square sq, Bitboard blockers)
     return attacks;
 }
 
-Bitboard Attack::calcRookAttacks(Square sq, Bitboard blockers)
+Bitboard Attack::calcRookAttacks(Square sq, Bitboard blockers) const
 {
     Bitboard attacks = 0;
 
@@ -302,7 +312,7 @@ Bitboard Attack::calcRookAttacks(Square sq, Bitboard blockers)
     return attacks;
 }
 
-Bitboard Attack::inBetween(Square from, Square to)
+Bitboard Attack::inBetween(Square from, Square to) const
 {
     return mBetweenRectangular[to_int(from)][to_int(to)];
 }
@@ -329,7 +339,7 @@ void Attack::initBetweenTable()
     }
 }
 
-Bitboard Attack::inLine(Square from, Square to)
+Bitboard Attack::inLine(Square from, Square to) const
 {
     return mLined[to_int(from)][to_int(to)];
 }
