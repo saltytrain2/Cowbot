@@ -111,7 +111,7 @@ TEST_CASE("Perft") {
         board->updateChessBoard("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1");
         board->printSquareBoard();
         std::vector<uint64_t> ans = {1, 14, 191, 2812, 43238, 674624, 11030083};
-        std::cout << "Position 2" << std::endl;
+        std::cout << "Position 3" << std::endl;
         for (uint32_t i = 0; i < ans.size(); ++i) {
             auto start = std::chrono::system_clock::now();
             auto res = perft(moveGen.get(), board.get(), i);
@@ -127,7 +127,7 @@ TEST_CASE("Perft") {
         board->updateChessBoard("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
         board->printSquareBoard();
         std::vector<uint64_t> ans = {1, 6, 264, 9467, 422333, 15833292, 706045033};
-        std::cout << "Position 2" << std::endl;
+        std::cout << "Position 4" << std::endl;
         for (uint32_t i = 0; i < ans.size() - 1; ++i) {
             auto start = std::chrono::system_clock::now();
             auto res = perft(moveGen.get(), board.get(), i);
@@ -143,7 +143,7 @@ TEST_CASE("Perft") {
         board->updateChessBoard("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8  ");
         board->printSquareBoard();
         std::vector<uint64_t> ans = {1, 44, 1486, 62379, 2103487, 89941194};
-        std::cout << "Position 2" << std::endl;
+        std::cout << "Position 5" << std::endl;
         for (uint32_t i = 0; i < ans.size(); ++i) {
             auto start = std::chrono::system_clock::now();
             auto res = perft(moveGen.get(), board.get(), i);
@@ -159,7 +159,7 @@ TEST_CASE("Perft") {
         board->updateChessBoard("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 ");
         board->printSquareBoard();
         std::vector<uint64_t> ans = {1, 46, 2079, 89890, 3894594, 164075551};
-        std::cout << "Position 2" << std::endl;
+        std::cout << "Position 6" << std::endl;
         for (uint32_t i = 0; i < ans.size(); ++i) {
             auto start = std::chrono::system_clock::now();
             auto res = perft(moveGen.get(), board.get(), i);
