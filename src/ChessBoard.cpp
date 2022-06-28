@@ -134,12 +134,12 @@ Color ChessBoard::getTurn() const noexcept
 
 bool ChessBoard::getWhiteCastleRights(Castling side) const noexcept
 {
-    return mCastle[to_int(Color::White)][to_int(side)];
+    return mCastle[to_int(side)];
 }
 
 bool ChessBoard::getBlackCastleRights(Castling side) const noexcept
 {
-    return mCastle[to_int(Color::Black)][to_int(side)];
+    return mCastle[2 + to_int(side)];
 }
 
 std::vector<Move> ChessBoard::getMoveList() const noexcept
@@ -214,17 +214,18 @@ void ChessBoard::makeMove(Move& nextMove)
     MoveType type = nextMove.getMoveType();
     PieceSets movedPiece = mSquareBoard[to_int(startingSquare)];
     PieceSets capturedPiece = mSquareBoard[to_int(endingSquare)];
+    nextMove.setCapturedPiece(capturedPiece);
+
+    mMoveList.push_back(nextMove);
+    mPinnedList.push_back(mPinnedPieces);
+    mCastlingList.push_back(mCastle);
+    mEnpassantList.push_back(mEnpassantTarget);
 
     mPieceBB[to_int(movedPiece)] ^= startBitboard | endBitboard;
     mPieceBB[to_int(capturedPiece)] &= ~endBitboard;
     mSquareBoard[to_int(startingSquare)] = PieceSets::EmptySquares;
     mSquareBoard[to_int(endingSquare)] = movedPiece;
-    nextMove.setCapturedPiece(capturedPiece);
-
-    // if (capturedPiece != PieceSets::EmptySquares) {
-    //     nextMove.setCapturedPiece(capturedPiece);
-    //     mPieceBB[to_int(capturedPiece)] &= ~endBitboard;
-    // }
+    mEnpassantTarget = 0;
 
     if (type == MoveType::Castle) {
         if (to_int(startingSquare) < to_int(endingSquare)) {
@@ -249,19 +250,16 @@ void ChessBoard::makeMove(Move& nextMove)
             mPieceBB[to_int(PieceSets::WhitePawns)] &= ~Utils::northOne(endBitboard);
             mSquareBoard[to_int(Utils::northOne(endingSquare))] = PieceSets::EmptySquares;
         }
-    }
-    mMoveList.push_back(nextMove);
-    mPinnedList.push_back(mPinnedPieces);
-    mCastlingList.push_back(mCastle);
-    mEnpassantList.push_back(mEnpassantTarget);
-
-    if (movedPiece == PieceSets::WhitePawns && to_int(endingSquare) - to_int(startingSquare) == 16) {
+    } else if (movedPiece == PieceSets::WhitePawns && to_int(endingSquare) - to_int(startingSquare) == 16) {
         mEnpassantTarget = Utils::southOne(endBitboard);
     } else if (movedPiece == PieceSets::BlackPawns && to_int(startingSquare) - to_int(endingSquare) == 16) {
         mEnpassantTarget = Utils::northOne(endBitboard);
-    } else {
-        mEnpassantTarget = 0;
     }
+
+    // mMoveList.push_back(nextMove);
+    // mPinnedList.push_back(mPinnedPieces);
+    // mCastlingList.push_back(mCastle);
+    // mEnpassantList.push_back(mEnpassantTarget);
 
     updateRedundantBitboards();
     updateCastlingRights();
@@ -333,11 +331,11 @@ void ChessBoard::printSquareBoard() const noexcept
 
 void ChessBoard::undoMove() 
 {
+    mTurn = !mTurn;
     Move prevMove = mMoveList.back();
     mCastle = mCastlingList.back();
     mPinnedPieces = mPinnedList.back();
     mEnpassantTarget = mEnpassantList.back();
-    mTurn = !mTurn;
 
     Square startingSquare = prevMove.getStartingSquare();
     Square endingSquare = prevMove.getEndingSquare();
@@ -391,35 +389,14 @@ Bitboard ChessBoard::getPinnedPieces() const noexcept
 void ChessBoard::updateCastlingRights() noexcept
 {
     Bitboard whiteRooks = getWhiteRooks();
-    Bitboard blackRooks = getBlackRooks();
     Bitboard whiteKing = getWhiteKing();
+    Bitboard blackRooks = getBlackRooks();
     Bitboard blackKing = getBlackKing();
 
-    if (!(whiteRooks & Utils::getBitboard(Square::A1))) {
-        mCastle[to_int(Color::White)][to_int(Castling::Queenside)] = false;
-    }
-
-    if (!(whiteRooks & Utils::getBitboard(Square::H1))) {
-        mCastle[to_int(Color::White)][to_int(Castling::Kingside)] = false;
-    }
-
-    if (!(blackRooks & Utils::getBitboard(Square::A8))) {
-        mCastle[to_int(Color::Black)][to_int(Castling::Queenside)] = false;
-    }
-
-    if (!(blackRooks & Utils::getBitboard(Square::H8))) {
-        mCastle[to_int(Color::Black)][to_int(Castling::Kingside)] = false;
-    }
-
-    if (!(whiteKing & Utils::getBitboard(Square::E1))) {
-        mCastle[to_int(Color::White)][to_int(Castling::Queenside)] = false;
-        mCastle[to_int(Color::White)][to_int(Castling::Kingside)] = false;
-    }
-
-    if (!(blackKing & Utils::getBitboard(Square::E8))) {
-        mCastle[to_int(Color::Black)][to_int(Castling::Queenside)] = false;
-        mCastle[to_int(Color::Black)][to_int(Castling::Kingside)] = false;
-    }
+    mCastle[(to_int(Color::White) << 1) + to_int(Castling::Kingside)] = mCastle[(to_int(Color::White) << 1) + to_int(Castling::Kingside)] && whiteRooks & Utils::getBitboard(Square::H1) && whiteKing & Utils::getBitboard(Square::E1);
+    mCastle[(to_int(Color::White) << 1) + to_int(Castling::Queenside)] = mCastle[(to_int(Color::White) << 1) + to_int(Castling::Queenside)] && whiteRooks & Utils::getBitboard(Square::A1) && whiteKing & Utils::getBitboard(Square::E1);
+    mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Kingside)] = mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Kingside)] && blackRooks & Utils::getBitboard(Square::H8) && blackKing & Utils::getBitboard(Square::E8);
+    mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Queenside)] = mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Queenside)] && blackRooks & Utils::getBitboard(Square::A8) && blackKing & Utils::getBitboard(Square::E8);
 }
 
 void ChessBoard::updatePinnedPieces(Color turn) noexcept
@@ -429,7 +406,7 @@ void ChessBoard::updatePinnedPieces(Color turn) noexcept
 
 bool ChessBoard::getCastleRights(Castling side, Color turn) const noexcept
 {
-    return mCastle[to_int(turn)][to_int(side)];
+    return mCastle[(to_int(turn) << 1) + to_int(side)];
 }
 
 bool ChessBoard::isLegal(const Move& move)
@@ -562,25 +539,25 @@ void ChessBoard::updateChessBoard(const std::string& layout)
     }
 
     // initializing mWhiteCastle and mBlackCastle
-    mCastle[to_int(Color::White)][to_int(Castling::Kingside)] = false;
-    mCastle[to_int(Color::White)][to_int(Castling::Queenside)] = false;
-    mCastle[to_int(Color::Black)][to_int(Castling::Kingside)] = false;
-    mCastle[to_int(Color::Black)][to_int(Castling::Queenside)] = false;
+    mCastle[(to_int(Color::White) << 1) + to_int(Castling::Kingside)] = false;
+    mCastle[(to_int(Color::White) << 1) + to_int(Castling::Queenside)] = false;
+    mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Kingside)] = false;
+    mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Queenside)] = false;
     for (auto i: fenFields[2]) {
         switch (i) {
             case '-':
                 break;
             case 'K':
-                mCastle[to_int(Color::White)][to_int(Castling::Kingside)] = true;
+                mCastle[(to_int(Color::White) << 1) + to_int(Castling::Kingside)] = true;
                 break;
             case 'Q':
-                mCastle[to_int(Color::White)][to_int(Castling::Queenside)] = true;
+                mCastle[(to_int(Color::White) << 1) + to_int(Castling::Queenside)] = true;
                 break;
             case 'k':
-                mCastle[to_int(Color::Black)][to_int(Castling::Kingside)] = true;
+                mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Kingside)] = true;
                 break;
             case 'q':
-                mCastle[to_int(Color::Black)][to_int(Castling::Queenside)] = true;
+                mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Queenside)] = true;
                 break;
         }
     }

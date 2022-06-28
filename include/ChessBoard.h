@@ -92,14 +92,14 @@ private:
  
     // buffers to check whehter the player can castle or not
     // index 0 for kingside, index 1 for queenside
-    std::array<std::array<bool, 2>, 2> mCastle;
+    std::array<bool, 4> mCastle;
 
 
     // A square-centric represenation of the board
     PieceSets mSquareBoard[64];
     // A list of moves that have been currently made
     std::vector<Move> mMoveList;
-    std::vector<std::array<std::array<bool, 2>, 2>> mCastlingList;
+    std::vector<std::array<bool, 4>> mCastlingList;
     std::vector<Bitboard> mPinnedList;
     std::vector<Bitboard> mEnpassantList;
     //std::vector<PieceSets> mCapturedList;
