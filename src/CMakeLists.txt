@@ -3,7 +3,12 @@ set(OBJECT_FILES
     Move.cpp
     Attack.cpp
     Utils.cpp
-    MoveGen.cpp)
+    MoveGen.cpp
+    PNRG.cpp
+    Search.cpp
+    FakeEval.cpp
+    TT.cpp
+)
 
 add_library(ChessEngine STATIC ${OBJECT_FILES})
 target_include_directories(ChessEngine PUBLIC ../include)

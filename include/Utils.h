@@ -52,4 +52,6 @@ Square northeastOne(Square sq);
 Square northwestOne(Square sq);
 Square southeastOne(Square sq);
 Square southwestOne(Square sq);
-}
+Square flipSquare(Square sq);
+uint8_t getColumn(Square sq);
+} // namespace Utils

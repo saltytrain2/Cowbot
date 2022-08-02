@@ -123,3 +123,13 @@ bool Utils::isOneHot(Bitboard loc)
 {
     return loc && !(loc & (loc - 1));
 }
+
+Square Utils::flipSquare(Square sq)
+{
+    return Square(to_int(sq) ^ 0b111000);
+}
+
+uint8_t Utils::getColumn(Square sq)
+{
+    return to_int(sq) & 0b111;
+}

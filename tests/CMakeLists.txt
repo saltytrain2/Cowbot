@@ -10,6 +10,12 @@ list(APPEND tests MoveGenTest)
 add_executable(PerftTest PerftTest.cpp)
 list(APPEND tests PerftTest)
 
+add_executable(SearchTest SearchTest.cpp)
+list(APPEND tests SearchTest)
+
+add_executable(TTTest TTTest.cpp)
+list(APPEND tests TTTest)
+
 foreach(test ${tests})
     target_link_libraries(${test} PRIVATE ChessEngine)
     target_compile_options(${test} PRIVATE ${MY_COMPILE_FLAGS})
