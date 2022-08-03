@@ -8,6 +8,7 @@ set(OBJECT_FILES
     Search.cpp
     FakeEval.cpp
     TT.cpp
+    MoveOrdering.cpp
 )
 
 add_library(ChessEngine STATIC ${OBJECT_FILES})

@@ -666,3 +666,9 @@ ZobristHash ChessBoard::getHash() const noexcept
 {
     return mZobristHash;
 }
+
+bool ChessBoard::containsPromotingPawns() const
+{
+    Bitboard pawns = getPawns(mTurn);
+    return mTurn == Color::White ? pawns & Utils::SEVENTH_RANK : pawns & Utils::SECOND_RANK;
+}

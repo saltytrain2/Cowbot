@@ -5,30 +5,44 @@ MoveGen::MoveGen(ChessBoard* src, Attack* attack)
 {
 }
 
-std::vector<Move> MoveGen::generateLegalMoves()
+std::vector<Move> MoveGen::generateLegalMoves(Color side)
 {
     std::vector<Move> moveList;
     moveList.reserve(240);
 
-    Color toMove = mBoard->getTurn();
-    Bitboard checkers = mBoard->getKingAttackers(toMove, mBoard->getAllPieces());
+    Bitboard checkers = mBoard->getKingAttackers(side, mBoard->getAllPieces());
 
     if (checkers) {
-        generateLegalEvasivePawnMoves(toMove, checkers, moveList);
-        generateLegalEvasiveKnightMoves(toMove, checkers, moveList);
-        generateLegalEvasiveBishopMoves(toMove, checkers, moveList);
-        generateLegalEvasiveRookMoves(toMove, checkers, moveList);
-        generateLegalEvasiveQueenMoves(toMove, checkers, moveList);
+        generateLegalEvasivePawnMoves(side, checkers, moveList);
+        generateLegalEvasiveKnightMoves(side, checkers, moveList);
+        generateLegalEvasiveBishopMoves(side, checkers, moveList);
+        generateLegalEvasiveRookMoves(side, checkers, moveList);
+        generateLegalEvasiveQueenMoves(side, checkers, moveList);
     } else {
-        generateLegalNonEvasivePawnMoves(toMove, moveList);
-        generateLegalNonEvasiveKnightMoves(toMove, moveList);
-        generateLegalNonEvasiveBishopMoves(toMove, moveList);
-        generateLegalNonEvasiveRookMoves(toMove, moveList);
-        generateLegalNonEvasiveQueenMoves(toMove, moveList);
+        generateLegalNonEvasivePawnMoves(side, moveList);
+        generateLegalNonEvasiveKnightMoves(side, moveList);
+        generateLegalNonEvasiveBishopMoves(side, moveList);
+        generateLegalNonEvasiveRookMoves(side, moveList);
+        generateLegalNonEvasiveQueenMoves(side, moveList);
     }
-    generateLegalKingMoves(toMove, moveList);
+    generateLegalKingMoves(side, moveList);
 
     return moveList;
+}
+
+std::vector<Move> MoveGen::generateLegalCaptures(Color side)
+{
+    std::vector<Move> legalMoves = generateLegalMoves(side);
+    Bitboard enemyPieces = mBoard->getPieces(!side);
+    std::vector<Move> legalCaptures;
+
+    for (auto move: legalMoves) {
+        if (Utils::getBitboard(move.getEndingSquare()) & enemyPieces) {
+            legalCaptures.push_back(move);
+        }
+    }
+
+    return legalCaptures;
 }
 
 void MoveGen::generateLegalNonEvasivePawnMoves(Color color, std::vector<Move>& moveList)

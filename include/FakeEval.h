@@ -20,6 +20,8 @@ public:
     // always return eval wrt white
     int16_t eval(const ChessBoard& board);
 
+    int16_t getPieceValue(PieceSets piece);
+
 private:
     int16_t mMGTable[12][64];
     int16_t mEGTable[12][64];

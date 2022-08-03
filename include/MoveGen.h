@@ -17,7 +17,8 @@ public:
     MoveGen& operator=(const MoveGen& rhs) = default;
 
     void generatePseudoLegalMoves();
-    std::vector<Move> generateLegalMoves();
+    std::vector<Move> generateLegalMoves(Color side);
+    std::vector<Move> generateLegalCaptures(Color side);
 
 private:
     Attack* mAttack;

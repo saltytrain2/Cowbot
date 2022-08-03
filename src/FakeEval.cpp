@@ -4,12 +4,12 @@
 #include "FakeEval.h"
 #include "ChessBoard.h"
 
-int16_t MG_VALUE[6] = { 82, 337, 365, 477, 1025,  2000};
-int16_t EG_VALUE[6] = { 94, 281, 297, 512,  936,  2000};
+int16_t MG_VALUE[6] = { 82, 337, 365, 477, 1025, 12000};
+int16_t EG_VALUE[6] = { 94, 281, 297, 512,  936, 12000};
 
-/* piece/sq tables */
-/* values from Rofchade: http://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&start=19 */
-/* first index is A8, last index is H1 */
+/* piece/sq tables
+values from Rofchade: http://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&start=19
+first index is A8, last index is H1 */
 
 int16_t MG_PAWN_TABLE[64] = {
      0,   0,   0,   0,   0,   0,  0,   0,
@@ -172,11 +172,11 @@ FakeEval::FakeEval()
 
 void FakeEval::init_tables()
 {
-    for (PieceSets i = PieceSets::WhitePawns; i < PieceSets::WhitePieces; ++i) {
-        for (Square j = Square::A1; j < Square::Null; ++j) {
-            Square sq = to_int(i) & 1 ? j : Utils::flipSquare(j);
-            mMGTable[to_int(i)][to_int(j)] = MG_VALUE[to_int(i) >> 1] + MG_TABLE[to_int(i) >> 1][to_int(sq)];
-            mEGTable[to_int(i)][to_int(j)] = EG_VALUE[to_int(i) >> 1] + MG_TABLE[to_int(i) >> 1][to_int(sq)];
+    for (PieceSets piece = PieceSets::WhitePawns; piece < PieceSets::WhitePieces; ++piece) {
+        for (Square sq = Square::A1; sq < Square::Null; ++sq) {
+            Square relPerspective = to_int(piece) & 1 ? sq : Utils::flipSquare(sq);
+            mMGTable[to_int(piece)][to_int(sq)] = MG_VALUE[to_int(piece) >> 1] + MG_TABLE[to_int(piece) >> 1][to_int(relPerspective)];
+            mEGTable[to_int(piece)][to_int(sq)] = EG_VALUE[to_int(piece) >> 1] + MG_TABLE[to_int(piece) >> 1][to_int(relPerspective)];
         }
     }
 }
@@ -187,11 +187,11 @@ int16_t FakeEval::eval(const ChessBoard& board)
     int16_t eg[2] = {};
     int8_t phase = 0;
 
-    for (Square i = Square::A1; i < Square::Null; ++i) {
-        PieceSets piece = board.getPiece(i);
+    for (Square sq = Square::A1; sq < Square::Null; ++sq) {
+        PieceSets piece = board.getPiece(sq);
         if (piece != PieceSets::EmptySquares) {
-            mg[to_int(piece) & 1] += mMGTable[to_int(piece)][to_int(i)];
-            eg[to_int(piece) & 1] += mEGTable[to_int(piece)][to_int(i)];
+            mg[to_int(piece) & 1] += mMGTable[to_int(piece)][to_int(sq)];
+            eg[to_int(piece) & 1] += mEGTable[to_int(piece)][to_int(sq)];
             phase += GAMEPHASE[to_int(piece)];
         }
     }
@@ -202,4 +202,9 @@ int16_t FakeEval::eval(const ChessBoard& board)
     uint8_t mgPhase = phase > 24 ? 24 : phase;
     uint8_t egPhase = 24 - mgPhase;
     return (mgScore * mgPhase + egScore * egPhase) / 24;
+}
+
+int16_t FakeEval::getPieceValue(PieceSets piece)
+{
+    return MG_VALUE[to_int(piece) >> 1];
 }

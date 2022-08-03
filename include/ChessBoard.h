@@ -85,6 +85,8 @@ public:
     bool isKingUnderAttack(Color turn, Bitboard blockers) const;
     bool isKingUnderAttack() const;
 
+    bool containsPromotingPawns() const;
+
     // debug
     bool validateSquareBoard() const;
 private:

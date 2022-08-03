@@ -17,7 +17,7 @@ uint64_t helper(MoveGen* moveGen, ChessBoard* board, int depth)
     }
 
     uint64_t res = 0;
-    auto moveList = moveGen->generateLegalMoves();
+    auto moveList = moveGen->generateLegalMoves(board->getTurn());
 
     for (auto i : moveList) {
         board->makeMove(i);
@@ -36,7 +36,7 @@ uint64_t perft(MoveGen* moveGen, ChessBoard* board, int depth)
 
     uint64_t res = 0;
     uint64_t prev = 0;
-    auto moveList = moveGen->generateLegalMoves();
+    auto moveList = moveGen->generateLegalMoves(board->getTurn());
 
     for (auto i : moveList) {
         prev = res;
