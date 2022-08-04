@@ -14,6 +14,8 @@
 #include "MoveOrdering.h"
 
 TEST_CASE("Mate in 2") {
+    std::ios::sync_with_stdio(false);
+
     auto attack = std::make_shared<Attack>();
     attack->initTables();
     auto board = std::make_shared<ChessBoard>(attack.get());
@@ -29,15 +31,16 @@ TEST_CASE("Mate in 2") {
     auto start = std::chrono::system_clock::now();
     auto res = search->search(6).first;
     auto end = std::chrono::system_clock::now();
-    auto milliseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     CHECK(res == "f3f7");
-    std::cout << "time: " << double(milliseconds.count()) / 1000000 << std::endl;
+    std::cout << "time: " << double(microseconds.count()) / 1000000 << std::endl;
 
     board->updateChessBoard("1Q6/3r1p1k/6pp/8/1pP1p3/1PbqB3/5PPP/5RK1 b - - 1 1");
     start = std::chrono::system_clock::now();
     res = search->search(6).first;
     end = std::chrono::system_clock::now();
-    milliseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     CHECK(res == "d3f1");
-    std::cout << "time: " << double(milliseconds.count()) / 1000000 << std::endl;
+    std::cout << "time: " << double(microseconds.count()) / 1000000 << std::endl;
+
 }

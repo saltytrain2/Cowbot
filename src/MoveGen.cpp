@@ -41,7 +41,6 @@ std::vector<Move> MoveGen::generateLegalCaptures(Color side)
             legalCaptures.push_back(move);
         }
     }
-
     return legalCaptures;
 }
 

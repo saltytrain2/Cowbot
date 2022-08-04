@@ -1,8 +1,8 @@
-#include <unordered_map>
-#include <algorithm>
-#include <iostream>
-
 #include "Search.h"
+
+#include <map>
+#include <algorithm>
+
 #include "Move.h"
 #include "ChessBoard.h"
 #include "MoveOrdering.h"
@@ -14,20 +14,28 @@ Search::Search(ChessBoard* board, MoveGen* moveGen, FakeEval* fakeEval, TT* tt, 
 std::pair<std::string, int16_t> Search::search(uint8_t depth)
 {
     auto rootMoves = mMoveGen->generateLegalMoves(mBoard->getTurn());
-    std::unordered_map<std::string, int16_t> rootMoveScores;
+    std::pair<std::string, int16_t> bestMove;
 
     for (int i = 1; i <= depth; ++i) {
-        for (auto j: rootMoves) {
-            mBoard->makeMove(j);
+        for (auto move: rootMoves) {
+            mBoard->makeMove(move);
             // int16_t score = toMove == Color::White ? alphaBetaBlack(INT16_MIN, INT16_MAX, depth-1, 1) : alphaBetaWhite(INT16_MIN, INT16_MAX, depth-1, 1);
             int16_t score = -alphaBeta(INT16_MIN + 1, INT16_MAX, i - 1, 1);
-            rootMoveScores[j.toString()] = score;
+            if (score > bestMove.second) {
+                bestMove.first = move.toString();
+                bestMove.second = score;
+            }
             mBoard->undoMove();
         }
+        for (auto move: rootMoves) {
+            if (move.toString() == bestMove.first) {
+                std::swap(rootMoves[0], move);
+            }
+        }
+        mMoveOrdering->orderMoves(rootMoves.begin() + 1, rootMoves.end());
     }
-
-    auto compare = [](const std::pair<std::string, int16_t>& x, const std::pair<std::string, int16_t>& y) { return x.second < y.second; };
-    return *std::max_element(rootMoveScores.begin(), rootMoveScores.end(), compare);
+    mMoveOrdering->clearHistory();
+    return bestMove;
 }
 
 int16_t Search::alphaBeta(int16_t alpha, int16_t beta, uint8_t depthleft, uint8_t depth)
@@ -60,12 +68,16 @@ int16_t Search::alphaBeta(int16_t alpha, int16_t beta, uint8_t depthleft, uint8_
     }
 
     Move bestMove;
+    mMoveOrdering->orderMoves(legalMoves.begin(), legalMoves.end());
     for (auto move: legalMoves) {
         mBoard->makeMove(move);
         int16_t score = -alphaBeta(-beta, -alpha, depthleft - 1, depth + 1);
         mBoard->undoMove();
         if (score >= beta) {
             mTT->setEntry(posHash, TTEntry(posHash, move, score, depthleft, NodeType::CUT_NODE));
+            if (!mBoard->isCapture(move)) {
+                mMoveOrdering->addHistory(move, depth);
+            }
             return beta;
         }
         if (score > alpha) {
@@ -103,7 +115,7 @@ int16_t Search::qsearch(int16_t alpha, int16_t beta)
     }
 
     auto prunedCaptures = mMoveGen->generateLegalCaptures(mBoard->getTurn());
-    prunedCaptures = mMoveOrdering->deltaPruning(prunedCaptures, currentEval, alpha);
+    mMoveOrdering->orderMovesQuiescent(prunedCaptures.begin(), prunedCaptures.end(), currentEval, alpha);
 
     for (auto capture : prunedCaptures) {
         mBoard->makeMove(capture);

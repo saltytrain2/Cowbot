@@ -672,3 +672,8 @@ bool ChessBoard::containsPromotingPawns() const
     Bitboard pawns = getPawns(mTurn);
     return mTurn == Color::White ? pawns & Utils::SEVENTH_RANK : pawns & Utils::SECOND_RANK;
 }
+
+bool ChessBoard::isCapture(const Move& move) const
+{
+    return Utils::getBitboard(move.getEndingSquare()) & getPieces(!mTurn);
+}

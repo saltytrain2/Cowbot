@@ -84,6 +84,7 @@ public:
     Bitboard getKingAttackers(Color turn, Bitboard blockers) const;
     bool isKingUnderAttack(Color turn, Bitboard blockers) const;
     bool isKingUnderAttack() const;
+    bool isCapture(const Move& move) const;
 
     bool containsPromotingPawns() const;
 
