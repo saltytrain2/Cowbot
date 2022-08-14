@@ -1,6 +1,8 @@
 #include "Move.h"
 
-Move::Move(std::string lan) : mMove(0), mCapturedPiece(PieceSets::EmptySquares)
+using namespace Cowbot;
+
+Move::Move(std::string lan) : mMove(0)
 {
     updateMove(lan);
 }
@@ -11,7 +13,6 @@ Move::Move(Bitmove src) : mMove(src)
 
 Move::Move(Square startSquare, Square endSquare, MoveType type, PromotionPiece piece) 
     : mMove(to_int(startSquare) | (to_int(endSquare) << 6) | (to_int(type) << 14) | ((to_int(piece) << 12)))
-    , mCapturedPiece(PieceSets::EmptySquares)
 {
 }
 
@@ -69,16 +70,6 @@ PromotionPiece Move::getPromotionPiece() const noexcept
     return PromotionPiece((mMove & 0x3000) >> 12);
 }   
 
-void Move::setCapturedPiece(PieceSets piece) noexcept
-{
-    mCapturedPiece = piece;
-}
-
-PieceSets Move::getCapturedPiece() const
-{
-    return mCapturedPiece;
-}
-
 std::string Move::toString() const
 {
     std::string res;
@@ -105,4 +96,24 @@ std::string Move::toString() const
         }
     }
     return res;
+}
+
+bool Move::operator==(const Move& rhs) const
+{
+    return mMove == rhs.mMove;
+}
+
+Move::operator bool() const
+{
+    return mMove;
+}
+
+bool Move::operator<(const Move& rhs) const
+{
+    return mMove < rhs.mMove;
+}
+
+Bitmove Move::getMove() const noexcept
+{
+    return mMove;
 }

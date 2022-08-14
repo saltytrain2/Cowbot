@@ -5,6 +5,8 @@
 #include "ChessBoard.h"
 #include "Attack.h"
 
+using namespace Cowbot;
+
 TEST_CASE("standard game") {
     auto attack = std::make_shared<Attack>();
     attack->initTables();
@@ -39,13 +41,10 @@ TEST_CASE("standard game") {
         board.makeMove(move);
         board.printSquareBoard();
         CHECK(board.getWhitePawns() == 0x1000EF00);
-        CHECK(board.getMoveList().size() == 1);
         Move move2("e7e5");
         move.updateMove("e7e5");
         board.makeMove(move);
         CHECK(board.getBlackPawns() == 0xEF001000000000);
-        CHECK(board.getMoveList().size() == 2);
-        CHECK(board.getMoveList().back().getCapturedPiece() == PieceSets::EmptySquares);
         move.updateMove("g1f3");
         board.makeMove(move);
         move.updateMove("b8c6");
@@ -56,7 +55,6 @@ TEST_CASE("standard game") {
         board.makeMove(move);
         CHECK(board.getWhiteKnights() == 0x2);
         CHECK(board.getBlackPawns() == 0xEF000000000000);
-        CHECK(board.getMoveList().size() == 6);
         board.undoMove();
         board.printSquareBoard();
         board.undoMove();

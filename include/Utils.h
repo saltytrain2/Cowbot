@@ -2,6 +2,7 @@
 
 #include "types.h"
 
+namespace Cowbot {
 namespace Utils {
 constexpr Bitboard FIRST_RANK = 0xFF;
 constexpr Bitboard SECOND_RANK = FIRST_RANK << 8;
@@ -52,4 +53,8 @@ Square northeastOne(Square sq);
 Square northwestOne(Square sq);
 Square southeastOne(Square sq);
 Square southwestOne(Square sq);
-}
+Square flipSquare(Square sq);
+uint8_t getColumn(Square sq);
+uint8_t getRank(Square sq);
+} // namespace Utils
+} // namespace Cowbot

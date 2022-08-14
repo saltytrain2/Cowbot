@@ -1,5 +1,7 @@
 #include "Utils.h"
 
+using namespace Cowbot;
+
 // debruijn lookup for determining index of LSB
 static constexpr Square SQUARE_LOOKUP[64] = {
     Square::A1, Square::H6, Square::B1, Square::A8, Square::A7, Square::D4, 
@@ -122,4 +124,18 @@ Square Utils::popLSB(Bitboard& pieceLocs)
 bool Utils::isOneHot(Bitboard loc)
 {
     return loc && !(loc & (loc - 1));
+}
+
+Square Utils::flipSquare(Square sq)
+{
+    return Square(to_int(sq) ^ 0b111000);
+}
+
+uint8_t Utils::getColumn(Square sq)
+{
+    return to_int(sq) & 0b111;
+}
+
+uint8_t Utils::getRank(Square sq) {
+    return (to_int(sq) & 0b111000) >> 3;
 }

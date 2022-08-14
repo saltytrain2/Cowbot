@@ -6,6 +6,7 @@
 #include <string>
 
 typedef uint64_t Bitboard;
+typedef uint64_t ZobristHash;
 typedef std::string UCImove;
 typedef uint16_t Bitmove;
 
@@ -123,4 +124,13 @@ enum class PromotionPiece : uint8_t {
 inline constexpr uint8_t to_int(PromotionPiece piece)
 {
     return static_cast<uint8_t>(piece);
+}
+
+enum class NodeType : uint8_t {
+    EXACT = 0b1, UPPERBOUND = 0b10, LOWERBOUND = 0b100
+};
+
+inline constexpr uint8_t to_int(NodeType node)
+{
+    return static_cast<uint8_t>(node);
 }

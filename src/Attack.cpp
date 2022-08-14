@@ -2,6 +2,7 @@
 #include <cassert>
 #include <iostream>
 
+using namespace Cowbot;
 // magics taken from shallow blue https://github.com/GunshipPenguin/shallow-blue
 // TODO create custom magics
 static constexpr uint64_t ROOK_MAGICS[64] = {

@@ -3,6 +3,7 @@
 #include "types.h"
 #include "Utils.h"
 
+namespace Cowbot {
 class Attack
 {
 public:
@@ -57,3 +58,4 @@ private:
     void initBetweenTable();
     void initLinedTable();
 };
+} // namespace Cowbot

@@ -3,25 +3,28 @@
 #include "types.h"
 #include <string>
 
-
+namespace Cowbot {
 class Move
 {
 public:
+    Move() = default;
     explicit Move(std::string lan);
     explicit Move(Bitmove src);
     Move(Square startSquare, Square endSquare, MoveType type, PromotionPiece piece = PromotionPiece::Null);
     ~Move() = default;
     Move(const Move& rhs) = default;
     Move& operator=(const Move& rhs) = default;
+    bool operator==(const Move& rhs) const;
+    operator bool() const;
+    bool operator<(const Move& rhs) const;
 
     void updateMove(std::string lan);
     Square getStartingSquare() const noexcept;
     Square getEndingSquare() const noexcept;
     MoveType getMoveType() const noexcept;
     PromotionPiece getPromotionPiece() const noexcept;
+    Bitmove getMove() const noexcept;
 
-    void setCapturedPiece(PieceSets piece) noexcept;
-    PieceSets getCapturedPiece() const;
     // converting a lan string into its 16-bit representation
     
     std::string toString() const;
@@ -34,5 +37,5 @@ private:
     // 6 bits for destination square
     // 6 bits for current square
     Bitmove mMove;
-    PieceSets mCapturedPiece;
 };
+} // namespace Cowbot

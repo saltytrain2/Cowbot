@@ -1,15 +1,12 @@
 #include "ChessBoard.h"
 
+using namespace Cowbot;
 
 ChessBoard::ChessBoard(Attack* ptr, const std::string& layout)
-    : mAttack(ptr), mPieceBB{}, mTurn(Color::White), mCastle{}, mSquareBoard{}, mMoveList{}
+    : mAttack(ptr), mPieceBB{}, mTurn(Color::White), mCastle{}, mSquareBoard{}
 {
+    initZobristHashes();
     updateChessBoard(layout);
-    mMoveList.reserve(200);
-    mCastlingList.reserve(200);
-    mPinnedList.reserve(200);
-    mEnpassantList.reserve(200);
-    //mCapturedList.reserve(200);
 }
 
 Bitboard ChessBoard::getWhitePawns() const noexcept
@@ -142,9 +139,9 @@ bool ChessBoard::getBlackCastleRights(Castling side) const noexcept
     return mCastle[2 + to_int(side)];
 }
 
-std::vector<Move> ChessBoard::getMoveList() const noexcept
+Move ChessBoard::getLastMove() const noexcept
 {
-    return mMoveList;
+    return mStateHistory.back().mMove;
 }
 
 void ChessBoard::updateBitboards(const std::vector<std::string>& piecesByRank) noexcept
@@ -205,7 +202,7 @@ void ChessBoard::updateRedundantBitboards() noexcept
     mPieceBB[to_int(PieceSets::EmptySquares)] = ~mPieceBB[to_int(PieceSets::AllPieces)];
 }
 
-void ChessBoard::makeMove(Move& nextMove)
+void ChessBoard::makeMove(const Move& nextMove)
 {
     Square startingSquare = nextMove.getStartingSquare();
     Square endingSquare = nextMove.getEndingSquare();
@@ -214,26 +211,33 @@ void ChessBoard::makeMove(Move& nextMove)
     MoveType type = nextMove.getMoveType();
     PieceSets movedPiece = mSquareBoard[to_int(startingSquare)];
     PieceSets capturedPiece = mSquareBoard[to_int(endingSquare)];
-    nextMove.setCapturedPiece(capturedPiece);
 
-    mMoveList.push_back(nextMove);
-    mPinnedList.push_back(mPinnedPieces);
-    mCastlingList.push_back(mCastle);
-    mEnpassantList.push_back(mEnpassantTarget);
+    mStateHistory.emplace_back(nextMove, mCastle, mPinnedPieces, mEnpassantTarget, mZobristHash, capturedPiece);
 
     mPieceBB[to_int(movedPiece)] ^= startBitboard | endBitboard;
     mPieceBB[to_int(capturedPiece)] &= ~endBitboard;
     mSquareBoard[to_int(startingSquare)] = PieceSets::EmptySquares;
     mSquareBoard[to_int(endingSquare)] = movedPiece;
+    mZobristHash ^= mZobristTable.mPSQ[to_int(movedPiece)][to_int(startingSquare)];
+    mZobristHash ^= mZobristTable.mPSQ[to_int(movedPiece)][to_int(endingSquare)];
+    if (capturedPiece != PieceSets::EmptySquares) {
+        mZobristHash ^= mZobristTable.mPSQ[to_int(capturedPiece)][to_int(endingSquare)];
+    }
+    if (mEnpassantTarget) {
+        mZobristHash ^= mZobristTable.mEnpassant[Utils::getColumn(Utils::getSquare(mEnpassantTarget))];
+    }
     mEnpassantTarget = 0;
-
     if (type == MoveType::Castle) {
         if (to_int(startingSquare) < to_int(endingSquare)) {
             mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] ^= Utils::eastOne(startBitboard) | Utils::eastOne(endBitboard);
+            mZobristHash ^= mZobristTable.mPSQ[to_int(PieceSets::WhiteRooks) + to_int(mTurn)][to_int(Utils::westOne(startingSquare))];
+            mZobristHash ^= mZobristTable.mPSQ[to_int(PieceSets::WhiteRooks) + to_int(mTurn)][to_int(Utils::eastOne(endingSquare))];
             mSquareBoard[to_int(Utils::eastOne(endingSquare))] = PieceSets::EmptySquares;
             mSquareBoard[to_int(Utils::eastOne(startingSquare))] = PieceSets(to_int(PieceSets::WhiteRooks) + to_int(mTurn));
         } else {
             mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] ^= Utils::westOne(startBitboard) | Utils::westOne(Utils::westOne(endBitboard));
+            mZobristHash ^= mZobristTable.mPSQ[to_int(PieceSets::WhiteRooks) + to_int(mTurn)][to_int(Utils::westOne(startingSquare))];
+            mZobristHash ^= mZobristTable.mPSQ[to_int(PieceSets::WhiteRooks) + to_int(mTurn)][to_int(Utils::westOne(Utils::westOne(endingSquare)))];
             mSquareBoard[to_int(Utils::westOne(Utils::westOne(endingSquare)))] = PieceSets::EmptySquares;
             mSquareBoard[to_int(Utils::westOne(startingSquare))] = PieceSets(to_int(PieceSets::WhiteRooks) + to_int(mTurn));
         }
@@ -246,20 +250,21 @@ void ChessBoard::makeMove(Move& nextMove)
         if (movedPiece == PieceSets::WhitePawns) {
             mPieceBB[to_int(PieceSets::BlackPawns)] &= ~Utils::southOne(endBitboard);
             mSquareBoard[to_int(Utils::southOne(endingSquare))] = PieceSets::EmptySquares;
+            mZobristHash ^= mZobristTable.mPSQ[to_int(PieceSets::BlackPawns)][to_int(Utils::southOne(endingSquare))];
         } else {
             mPieceBB[to_int(PieceSets::WhitePawns)] &= ~Utils::northOne(endBitboard);
             mSquareBoard[to_int(Utils::northOne(endingSquare))] = PieceSets::EmptySquares;
+            mZobristHash ^= mZobristTable.mPSQ[to_int(PieceSets::BlackPawns)][to_int(Utils::northOne(endingSquare))];
         }
     } else if (movedPiece == PieceSets::WhitePawns && to_int(endingSquare) - to_int(startingSquare) == 16) {
         mEnpassantTarget = Utils::southOne(endBitboard);
+        // use the fact that the enpassant target is going to be one set bit on the 3rd rank to determine row num
+        mZobristHash ^= mZobristTable.mEnpassant[Utils::getColumn(Utils::getSquare(mEnpassantTarget))];
     } else if (movedPiece == PieceSets::BlackPawns && to_int(startingSquare) - to_int(endingSquare) == 16) {
         mEnpassantTarget = Utils::northOne(endBitboard);
+        // use the fact that the enpassant target is going to be one set bit on the 6th rank to determine row num
+        mZobristHash ^= mZobristTable.mEnpassant[Utils::getColumn(Utils::getSquare(mEnpassantTarget))];
     }
-
-    // mMoveList.push_back(nextMove);
-    // mPinnedList.push_back(mPinnedPieces);
-    // mCastlingList.push_back(mCastle);
-    // mEnpassantList.push_back(mEnpassantTarget);
 
     updateRedundantBitboards();
     updateCastlingRights();
@@ -332,10 +337,13 @@ void ChessBoard::printSquareBoard() const noexcept
 void ChessBoard::undoMove() 
 {
     mTurn = !mTurn;
-    Move prevMove = mMoveList.back();
-    mCastle = mCastlingList.back();
-    mPinnedPieces = mPinnedList.back();
-    mEnpassantTarget = mEnpassantList.back();
+    BoardState state = mStateHistory.back();
+    Move prevMove = state.mMove;
+    mCastle = state.mCastle;
+    mPinnedPieces = state.mPinned;
+    mEnpassantTarget = state.mEnpassant;
+    mZobristHash = state.mZobristHash;
+    
 
     Square startingSquare = prevMove.getStartingSquare();
     Square endingSquare = prevMove.getEndingSquare();
@@ -343,7 +351,7 @@ void ChessBoard::undoMove()
     Bitboard endBitboard = Utils::getBitboard(endingSquare);
     MoveType type = prevMove.getMoveType();
     PieceSets movedPiece = mSquareBoard[to_int(endingSquare)];
-    PieceSets capturedPiece = prevMove.getCapturedPiece();
+    PieceSets capturedPiece = state.mCapturedPiece;
 
     mPieceBB[to_int(movedPiece)] ^= startBitboard | endBitboard;
     mPieceBB[to_int(capturedPiece)] |= endBitboard;
@@ -375,10 +383,7 @@ void ChessBoard::undoMove()
     }
     updateRedundantBitboards();
 
-    mMoveList.pop_back();
-    mPinnedList.pop_back();
-    mCastlingList.pop_back();
-    mEnpassantList.pop_back();
+    mStateHistory.pop_back();
 }
 
 Bitboard ChessBoard::getPinnedPieces() const noexcept
@@ -393,10 +398,23 @@ void ChessBoard::updateCastlingRights() noexcept
     Bitboard blackRooks = getBlackRooks();
     Bitboard blackKing = getBlackKing();
 
-    mCastle[(to_int(Color::White) << 1) + to_int(Castling::Kingside)] = mCastle[(to_int(Color::White) << 1) + to_int(Castling::Kingside)] && whiteRooks & Utils::getBitboard(Square::H1) && whiteKing & Utils::getBitboard(Square::E1);
-    mCastle[(to_int(Color::White) << 1) + to_int(Castling::Queenside)] = mCastle[(to_int(Color::White) << 1) + to_int(Castling::Queenside)] && whiteRooks & Utils::getBitboard(Square::A1) && whiteKing & Utils::getBitboard(Square::E1);
-    mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Kingside)] = mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Kingside)] && blackRooks & Utils::getBitboard(Square::H8) && blackKing & Utils::getBitboard(Square::E8);
-    mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Queenside)] = mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Queenside)] && blackRooks & Utils::getBitboard(Square::A8) && blackKing & Utils::getBitboard(Square::E8);
+    if (mCastle[(to_int(Color::White) << 1) + to_int(Castling::Kingside)] && !(whiteRooks & Utils::getBitboard(Square::H1) && whiteKing & Utils::getBitboard(Square::E1))) {
+        mZobristHash ^= mZobristTable.mCastling[(to_int(Color::White) << 1) + to_int(Castling::Kingside)];
+        mCastle[(to_int(Color::White) << 1) + to_int(Castling::Kingside)] = false;
+    }
+    if (mCastle[(to_int(Color::White) << 1) + to_int(Castling::Queenside)] && !(whiteRooks & Utils::getBitboard(Square::A1) && whiteKing & Utils::getBitboard(Square::E1))) {
+        mZobristHash ^= mZobristTable.mCastling[(to_int(Color::White) << 1) + to_int(Castling::Queenside)];
+        mCastle[(to_int(Color::White) << 1) + to_int(Castling::Queenside)] = false;
+    }
+
+    if (mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Kingside)] && !(blackRooks & Utils::getBitboard(Square::H8) && blackKing & Utils::getBitboard(Square::E8))) {
+        mZobristHash ^= mZobristTable.mCastling[(to_int(Color::Black) << 1) + to_int(Castling::Kingside)];
+        mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Kingside)] = false;
+    }
+    if (mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Queenside)] && !(blackRooks & Utils::getBitboard(Square::A8) && blackKing & Utils::getBitboard(Square::E8))) {
+        mZobristHash ^= mZobristTable.mCastling[(to_int(Color::Black) << 1) + to_int(Castling::Queenside)];
+        mCastle[(to_int(Color::Black) << 1) + to_int(Castling::Queenside)] = false;
+    }
 }
 
 void ChessBoard::updatePinnedPieces(Color turn) noexcept
@@ -460,7 +478,7 @@ bool ChessBoard::isLegal(const Move& move)
     return isLegalPinnedMove(startSquare, endSquare, mTurn);
 }
 
-bool ChessBoard::isSquareUnderAttack(Square sq, Color turn, Bitboard blockers)
+bool ChessBoard::isSquareUnderAttack(Square sq, Color turn, Bitboard blockers) const
 {
     return squareAttackers(sq, !turn, blockers) & getPieces(!turn);
 }
@@ -480,7 +498,7 @@ Bitboard ChessBoard::squareAttackers(Square sq, Color color, Bitboard blockers) 
            (mAttack->getKingAttacks(sq) & king);
 }
 
-Bitboard ChessBoard::squareBlockers(Square sq, Color turn)
+Bitboard ChessBoard::squareBlockers(Square sq, Color turn) const
 {
     Color enemyColor = !turn;
     Bitboard blockers = 0;
@@ -501,7 +519,7 @@ Bitboard ChessBoard::squareBlockers(Square sq, Color turn)
     return blockers;
 }
 
-bool ChessBoard::isLegalPinnedMove(Square startSquare, Square endSquare, Color turn)
+bool ChessBoard::isLegalPinnedMove(Square startSquare, Square endSquare, Color turn) const
 {
     Bitboard pinned = Utils::getBitboard(startSquare) & getPinnedPieces();
 
@@ -570,14 +588,15 @@ void ChessBoard::updateChessBoard(const std::string& layout)
     }
     updateSquareBoard();
     updatePinnedPieces(mTurn);
+    updateZobristHash();
 }
 
-bool ChessBoard::isKingUnderAttack(Color turn, Bitboard blockers)
+bool ChessBoard::isKingUnderAttack(Color turn, Bitboard blockers) const
 {
     return isSquareUnderAttack(Utils::getSquare(getKing(turn)), turn, blockers);
 }
 
-Bitboard ChessBoard::getKingAttackers(Color turn, Bitboard blockers)
+Bitboard ChessBoard::getKingAttackers(Color turn, Bitboard blockers) const
 {
     return squareAttackers(Utils::getSquare(getKing(turn)), !turn, blockers);
 }
@@ -596,4 +615,66 @@ bool ChessBoard::validateSquareBoard() const
         }
     }
     return true;
+}
+
+void ChessBoard::initZobristHashes()
+{
+    PRNG rng(1070372);
+
+    for (PieceSets i = PieceSets::WhitePawns; i < PieceSets::WhitePieces; ++i) {
+        for (Square j = Square::A1; j < Square::Null; ++j) {
+            mZobristTable.mPSQ[to_int(i)][to_int(j)] = rng.rand();
+        }
+    }
+
+    for (uint8_t i = 0; i < 8; ++i) {
+        mZobristTable.mEnpassant[i] = rng.rand();
+    }
+
+    for (uint8_t i = 0; i < 4; ++i) {
+        mZobristTable.mCastling[i] = rng.rand();
+    }
+
+    mZobristTable.mTurn = rng.rand();
+}
+
+void ChessBoard::updateZobristHash()
+{
+    for (PieceSets i = PieceSets::WhitePawns; i < PieceSets::WhitePieces; ++i) {
+        Bitboard pieces = mPieceBB[to_int(i)];
+        while (pieces) {
+            mZobristHash ^= mZobristTable.mPSQ[to_int(i)][to_int(Utils::popLSB(pieces))];
+        }
+    }
+}
+
+Bitboard ChessBoard::getPieces(PieceSets piece) const noexcept
+{
+    return mPieceBB[to_int(piece)];
+}
+
+PieceSets ChessBoard::getPiece(Square sq) const noexcept
+{
+    return mSquareBoard[to_int(sq)];
+}
+
+bool ChessBoard::isKingUnderAttack() const
+{
+    return isKingUnderAttack(mTurn, getAllPieces());
+}
+
+ZobristHash ChessBoard::getHash() const noexcept
+{
+    return mZobristHash;
+}
+
+bool ChessBoard::containsPromotingPawns() const
+{
+    Bitboard pawns = getPawns(mTurn);
+    return mTurn == Color::White ? pawns & Utils::SEVENTH_RANK : pawns & Utils::SECOND_RANK;
+}
+
+bool ChessBoard::isCapture(const Move& move) const
+{
+    return Utils::getBitboard(move.getEndingSquare()) & getPieces(!mTurn);
 }
