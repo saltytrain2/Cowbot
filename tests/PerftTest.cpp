@@ -10,6 +10,8 @@
 #include "Attack.h"
 #include "MoveGen.h"
 
+using namespace Cowbot;
+
 uint64_t helper(MoveGen* moveGen, ChessBoard* board, int depth)
 {
     if (depth == 0) {

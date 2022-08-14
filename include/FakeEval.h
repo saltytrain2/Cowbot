@@ -12,6 +12,7 @@
     This serves as a placeholder until the NNUE is complete
 */
 
+namespace Cowbot {
 class FakeEval 
 {
 public:
@@ -28,3 +29,4 @@ private:
 
     void init_tables();
 };
+} // namepsace Cowbot

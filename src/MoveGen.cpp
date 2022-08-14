@@ -1,5 +1,7 @@
 #include "MoveGen.h"
 
+using namespace Cowbot;
+
 MoveGen::MoveGen(ChessBoard* src, Attack* attack) 
     : mAttack(attack), mBoard(src)
 {

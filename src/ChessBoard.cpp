@@ -1,5 +1,6 @@
 #include "ChessBoard.h"
 
+using namespace Cowbot;
 
 ChessBoard::ChessBoard(Attack* ptr, const std::string& layout)
     : mAttack(ptr), mPieceBB{}, mTurn(Color::White), mCastle{}, mSquareBoard{}
@@ -201,7 +202,7 @@ void ChessBoard::updateRedundantBitboards() noexcept
     mPieceBB[to_int(PieceSets::EmptySquares)] = ~mPieceBB[to_int(PieceSets::AllPieces)];
 }
 
-void ChessBoard::makeMove(Move& nextMove)
+void ChessBoard::makeMove(const Move& nextMove)
 {
     Square startingSquare = nextMove.getStartingSquare();
     Square endingSquare = nextMove.getEndingSquare();

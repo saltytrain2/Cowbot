@@ -5,6 +5,8 @@
 #include "ChessBoard.h"
 #include "Attack.h"
 
+using namespace Cowbot;
+
 TEST_CASE("standard game") {
     auto attack = std::make_shared<Attack>();
     attack->initTables();

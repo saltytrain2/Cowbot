@@ -7,6 +7,8 @@
 #include "Move.h"
 #include <memory>
 
+using namespace Cowbot;
+
 TEST_CASE("Move Generation") {
     auto attack = std::make_shared<Attack>();
     attack->initTables();

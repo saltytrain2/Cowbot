@@ -6,6 +6,8 @@
 #include "Move.h"
 #include "types.h"
 
+using namespace Cowbot;
+
 MoveOrdering::MoveOrdering(ChessBoard *board, FakeEval* fakeEval)
     : mBoard(board), mFakeEval(fakeEval)
 {}
@@ -47,18 +49,18 @@ void MoveOrdering::deltaPruning(moveVectorIter begin, moveVectorIter end, int16_
     MvvLva(begin, it);
 }
 
-void MoveOrdering::addHistory(const Move& move, uint16_t depth)
+void MoveOrdering::addHistory(Move move, uint16_t depth)
 {
-    Square from = move.getStartingSquare(), to = move.getEndingSquare();
-    PieceSets movedPiece = mBoard->getPiece(from);
-    mHistory[to_int(movedPiece) & 1][to_int(from)][to_int(to)] += depth*depth;
+    Square to = move.getEndingSquare();
+    PieceSets movedPiece = mBoard->getPiece(move.getStartingSquare());
+    mHistory[to_int(movedPiece)][to_int(to)] += depth*depth;
 }
 
-uint32_t MoveOrdering::getHistory(const Move& move) const
+uint32_t MoveOrdering::getHistory(Move move) const
 {
     Square from = move.getStartingSquare(), to = move.getEndingSquare();
     PieceSets movedPiece = mBoard->getPiece(from);
-    return mHistory[to_int(movedPiece) & 1][to_int(from)][to_int(to)];
+    return mHistory[to_int(movedPiece)][to_int(to)];
 }
 
 void MoveOrdering::MvvLva(moveVectorIter begin, moveVectorIter end) const
@@ -66,24 +68,13 @@ void MoveOrdering::MvvLva(moveVectorIter begin, moveVectorIter end) const
     auto sortVictims = [this](Move x, Move y) {
         PieceSets xCapturedPiece = mBoard->getPiece(x.getEndingSquare());
         PieceSets yCapturedPiece = mBoard->getPiece(y.getEndingSquare());
-        return xCapturedPiece < yCapturedPiece;
+        PieceSets xMovedPiece = mBoard->getPiece(x.getStartingSquare());
+        PieceSets yMovedPiece = mBoard->getPiece(x.getStartingSquare());
+        int16_t xEval = mFakeEval->getPieceValue(xCapturedPiece) - mFakeEval->getPieceValue(xMovedPiece);
+        int16_t yEval = mFakeEval->getPieceValue(yCapturedPiece) - mFakeEval->getPieceValue(yMovedPiece);
+        return xEval < yEval;
     };
     std::sort(begin, end, sortVictims);
-
-    auto sortAggressors = [this](Move x, Move y) {
-        PieceSets xPiece = mBoard->getPiece(x.getEndingSquare());
-        PieceSets yPiece = mBoard->getPiece(y.getEndingSquare());
-        return xPiece > yPiece;
-    };
-    auto startSortAggressors = begin;
-    for (auto i = begin + 1, j = begin; i != end && begin != end; ++i, ++j) {
-        PieceSets xCapturedPiece = mBoard->getPiece(i->getEndingSquare());
-        PieceSets yCapturedPiece = mBoard->getPiece(j->getEndingSquare());
-        if (xCapturedPiece != yCapturedPiece) {
-            std::sort(startSortAggressors, i, sortAggressors);
-            startSortAggressors = i;
-        }
-    }
 }
 
 void MoveOrdering::orderHistory(moveVectorIter begin, moveVectorIter end) const
@@ -98,11 +89,9 @@ void MoveOrdering::orderHistory(moveVectorIter begin, moveVectorIter end) const
 
 void MoveOrdering::clearHistory()
 {
-    for (uint8_t i = 0; i < 2; ++i) {
+    for (uint8_t i = 0; i < 12; ++i) {
         for (uint8_t j = 0; j < 64; ++j) {
-            for (uint8_t k = 0; k < 64; ++k) {
-                mHistory[i][j][k] = 0;
-            }
+            mHistory[i][j] = 0;
         }
     }
 }

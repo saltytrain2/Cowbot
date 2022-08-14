@@ -4,6 +4,7 @@
 
 // Xorshift Random Number Generator
 // Choice of shift amounts comes from Stockfish
+namespace Cowbot {
 class PRNG 
 {
 public:
@@ -13,3 +14,4 @@ public:
 private:
     uint64_t s;
 };
+} // namespace Cowbot

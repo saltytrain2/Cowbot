@@ -1,5 +1,7 @@
 #include "Move.h"
 
+using namespace Cowbot;
+
 Move::Move(std::string lan) : mMove(0)
 {
     updateMove(lan);

@@ -4,6 +4,8 @@
 #include "FakeEval.h"
 #include "ChessBoard.h"
 
+using namespace Cowbot;
+
 int16_t MG_VALUE[6] = { 82, 337, 365, 477, 1025, 12000};
 int16_t EG_VALUE[6] = { 94, 281, 297, 512,  936, 12000};
 
@@ -176,7 +178,7 @@ void FakeEval::init_tables()
         for (Square sq = Square::A1; sq < Square::Null; ++sq) {
             Square relPerspective = to_int(piece) & 1 ? sq : Utils::flipSquare(sq);
             mMGTable[to_int(piece)][to_int(sq)] = MG_VALUE[to_int(piece) >> 1] + MG_TABLE[to_int(piece) >> 1][to_int(relPerspective)];
-            mEGTable[to_int(piece)][to_int(sq)] = EG_VALUE[to_int(piece) >> 1] + MG_TABLE[to_int(piece) >> 1][to_int(relPerspective)];
+            mEGTable[to_int(piece)][to_int(sq)] = EG_VALUE[to_int(piece) >> 1] + EG_TABLE[to_int(piece) >> 1][to_int(relPerspective)];
         }
     }
 }
@@ -201,7 +203,8 @@ int16_t FakeEval::eval(const ChessBoard& board)
     int16_t egScore = eg[to_int(Color::White)] - mg[to_int(Color::Black)];
     uint8_t mgPhase = phase > 24 ? 24 : phase;
     uint8_t egPhase = 24 - mgPhase;
-    return (mgScore * mgPhase + egScore * egPhase) / 24;
+    int16_t score = (mgScore * mgPhase + egScore * egPhase) / 24;
+    return board.getTurn() == Color::White ? score : -score;
 }
 
 int16_t FakeEval::getPieceValue(PieceSets piece)

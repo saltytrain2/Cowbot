@@ -127,7 +127,7 @@ inline constexpr uint8_t to_int(PromotionPiece piece)
 }
 
 enum class NodeType : uint8_t {
-    PV_NODE = 0b1, ALL_NODE = 0b10, CUT_NODE = 0b100
+    EXACT = 0b1, UPPERBOUND = 0b10, LOWERBOUND = 0b100
 };
 
 inline constexpr uint8_t to_int(NodeType node)

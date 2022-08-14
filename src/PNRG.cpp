@@ -1,5 +1,7 @@
 #include "PRNG.h"
 
+using namespace Cowbot;
+
 PRNG::PRNG(uint64_t seed) : s(seed)
 {}
 

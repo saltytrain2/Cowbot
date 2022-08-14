@@ -5,6 +5,8 @@
 
 #include "Attack.h"
 
+using namespace Cowbot;
+
 TEST_CASE("Attack Bitboards") {
     auto attackBoards = std::make_shared<Attack>();
     attackBoards->initTables();

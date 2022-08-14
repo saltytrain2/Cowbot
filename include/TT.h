@@ -6,6 +6,7 @@
 #include "Move.h"
 #include "types.h"
 
+namespace Cowbot {
 struct TTEntry
 {
 public:
@@ -15,7 +16,7 @@ public:
     bool operator==(const TTEntry& rhs) const;
     bool operator!=(const TTEntry& rhs) const;
     operator bool() const;
-    uint32_t key;
+    ZobristHash key;
     Move bestMove;
     int16_t score;
     uint8_t depth;
@@ -37,3 +38,4 @@ private:
     std::vector<TTEntry> mTT;
     uint64_t mask;
 };
+} // namespace Cowbot

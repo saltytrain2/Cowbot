@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 
+namespace Cowbot {
 class MoveGen
 {
 public:
@@ -44,3 +45,4 @@ private:
     void generateLegalEvasiveQueenMoves(Color color, Bitboard checkers, std::vector<Move>& moveList);
     void generateLegalEvasiveKingMoves(Color color, Bitboard checkers, std::vector<Move>& moveList);
 };
+} // namespace Cowbot

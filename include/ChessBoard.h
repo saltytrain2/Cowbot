@@ -16,7 +16,7 @@
 #include "Attack.h"
 #include "PRNG.h"
 
-
+namespace Cowbot {
 class ChessBoard
 {
 public:
@@ -76,7 +76,7 @@ public:
     void printSquareBoard() const noexcept;
 
     // makes the move
-    void makeMove(Move& nextMove);
+    void makeMove(const Move& nextMove);
     void undoMove();
 
 
@@ -159,3 +159,4 @@ private:
     Bitboard squareBlockers(Square sq, Color color) const;
     bool isSquareUnderAttack(Square sq, Color color, Bitboard blockers) const;
 };
+} // namespace Cowbot

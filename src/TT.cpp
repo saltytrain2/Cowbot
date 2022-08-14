@@ -3,8 +3,10 @@
 #include "Move.h"
 #include "types.h"
 
+using namespace Cowbot;
+
 TTEntry::TTEntry(ZobristHash hash, Move move, int16_t score, uint8_t depth, NodeType node)
-    : key(hash >> 32),
+    : key(hash),
       bestMove(move), 
       score(score),
       depth(depth),
@@ -38,7 +40,7 @@ void TT::setEntry(ZobristHash hash, TTEntry entry)
 
 bool TT::keyExists(ZobristHash hash) const
 {
-    return mTT[hash & mask] != TTEntry() && hash >> 32 == mTT[hash & mask].key;
+    return mTT[hash & mask] != TTEntry() && hash == mTT[hash & mask].key;
 }
 
 const TTEntry& TT::getEntry(ZobristHash hash) const

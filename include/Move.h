@@ -3,7 +3,7 @@
 #include "types.h"
 #include <string>
 
-
+namespace Cowbot {
 class Move
 {
 public:
@@ -38,13 +38,4 @@ private:
     // 6 bits for current square
     Bitmove mMove;
 };
-
-class MoveHash
-{
-public:
-    size_t operator()(const Move& rhs) const
-    {
-        return rhs.getMove();
-    }
-
-};
+} // namespace Cowbot
