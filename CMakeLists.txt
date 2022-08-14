@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(chess-engine LANGUAGES CXX)
 
-option(BUILD_GUI "build the gui that comes with this program" ON)
+option(BUILD_GUI "build the gui that comes with this program" OFF)
 
 # Set compiler flags
 set(CMAKE_CXX_STANDARD 17)
