@@ -81,6 +81,7 @@ public:
 
 
     bool isLegal(const Move& move);
+    bool isPseudoLegal(Move move) const;
     Bitboard getKingAttackers(Color turn, Bitboard blockers) const;
     bool isKingUnderAttack(Color turn, Bitboard blockers) const;
     bool isKingUnderAttack() const;
@@ -97,7 +98,7 @@ private:
     // boards 6-11 describe individual black pieces ordered from pawn, knight ... queen, king
     // board 12 describes all white pieces, board 13 describes all black pieces
     // board 14 describes all occupied squares, board 16 describes all empty squares
-    Bitboard mPieceBB[16];
+    Bitboard mPieceBB[15];
     // which player's turn it is to make a move
     Color mTurn;
  

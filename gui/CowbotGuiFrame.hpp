@@ -34,7 +34,7 @@ wxDECLARE_EVENT(EVT_PIECE_MOVED, ChessBoardEvent);
 wxDECLARE_EVENT(EVT_COMPUTER_TURN, ChessBoardEvent);
 
 CowbotGuiFrame::CowbotGuiFrame()
-    : wxFrame(NULL, wxID_ANY, "Hello World", wxDefaultPosition, wxSize(1024, 768)),
+    : wxFrame(NULL, wxID_ANY, "Hello World", wxDefaultPosition, wxSize(1366, 768)),
       mSizer(new wxBoxSizer(wxHORIZONTAL)),
       mChessBoard(new ChessBoardPanel(this)),
       mMoveHistory(new MoveHistory(this)),
@@ -97,6 +97,7 @@ void CowbotGuiFrame::OnPieceDrag(ChessBoardEvent& evt)
         mMoveHistory->InsertItem(mFullMoveCounter, num << mFullMoveCounter + 1);
     }
     mMoveHistory->SetItem(mFullMoveCounter, to_int(mTurn) + 1, evt.getString());
+    mMoveHistory->Update();
     mTurn = !mTurn;
     if (mTurn == Color::White) {
         ++mFullMoveCounter;
@@ -107,7 +108,6 @@ void CowbotGuiFrame::OnPieceDrag(ChessBoardEvent& evt)
         chessEvt.SetEventObject(this);
         ProcessWindowEvent(chessEvt);
     }
-    //mMoveHistory->Append(wxString(move.toString()));
 }
 
 void CowbotGuiFrame::OnComputerTurn(ChessBoardEvent&)

@@ -86,7 +86,7 @@ Bitboard ChessBoard::getAllPieces() const noexcept
 
 Bitboard ChessBoard::getEmptySquares() const noexcept
 {
-    return mPieceBB[to_int(PieceSets::EmptySquares)];
+    return ~getAllPieces();
 }
 
 Bitboard ChessBoard::getPawns(Color color) const noexcept
@@ -199,7 +199,6 @@ void ChessBoard::updateRedundantBitboards() noexcept
                                                mPieceBB[to_int(PieceSets::BlackBishops)] | mPieceBB[to_int(PieceSets::BlackRooks)] | 
                                                mPieceBB[to_int(PieceSets::BlackQueens)] | mPieceBB[to_int(PieceSets::BlackKing)];
     mPieceBB[to_int(PieceSets::AllPieces)] = mPieceBB[to_int(PieceSets::WhitePieces)] | mPieceBB[to_int(PieceSets::BlackPieces)];
-    mPieceBB[to_int(PieceSets::EmptySquares)] = ~mPieceBB[to_int(PieceSets::AllPieces)];
 }
 
 void ChessBoard::makeMove(const Move& nextMove)
@@ -215,12 +214,14 @@ void ChessBoard::makeMove(const Move& nextMove)
     mStateHistory.emplace_back(nextMove, mCastle, mPinnedPieces, mEnpassantTarget, mZobristHash, capturedPiece);
 
     mPieceBB[to_int(movedPiece)] ^= startBitboard | endBitboard;
-    mPieceBB[to_int(capturedPiece)] &= ~endBitboard;
+    mPieceBB[to_int(PieceSets::WhitePieces) + to_int(mTurn)] ^= startBitboard | endBitboard;
     mSquareBoard[to_int(startingSquare)] = PieceSets::EmptySquares;
     mSquareBoard[to_int(endingSquare)] = movedPiece;
     mZobristHash ^= mZobristTable.mPSQ[to_int(movedPiece)][to_int(startingSquare)];
     mZobristHash ^= mZobristTable.mPSQ[to_int(movedPiece)][to_int(endingSquare)];
     if (capturedPiece != PieceSets::EmptySquares) {
+        mPieceBB[to_int(capturedPiece)] ^= endBitboard;
+        mPieceBB[to_int(PieceSets::WhitePieces) + to_int(!mTurn)] ^= endBitboard;
         mZobristHash ^= mZobristTable.mPSQ[to_int(capturedPiece)][to_int(endingSquare)];
     }
     if (mEnpassantTarget) {
@@ -230,12 +231,14 @@ void ChessBoard::makeMove(const Move& nextMove)
     if (type == MoveType::Castle) {
         if (to_int(startingSquare) < to_int(endingSquare)) {
             mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] ^= Utils::eastOne(startBitboard) | Utils::eastOne(endBitboard);
+            mPieceBB[to_int(PieceSets::WhitePieces) + to_int(mTurn)] ^= Utils::eastOne(startBitboard) | Utils::eastOne(endBitboard);
             mZobristHash ^= mZobristTable.mPSQ[to_int(PieceSets::WhiteRooks) + to_int(mTurn)][to_int(Utils::westOne(startingSquare))];
             mZobristHash ^= mZobristTable.mPSQ[to_int(PieceSets::WhiteRooks) + to_int(mTurn)][to_int(Utils::eastOne(endingSquare))];
             mSquareBoard[to_int(Utils::eastOne(endingSquare))] = PieceSets::EmptySquares;
             mSquareBoard[to_int(Utils::eastOne(startingSquare))] = PieceSets(to_int(PieceSets::WhiteRooks) + to_int(mTurn));
         } else {
             mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] ^= Utils::westOne(startBitboard) | Utils::westOne(Utils::westOne(endBitboard));
+            mPieceBB[to_int(PieceSets::WhitePieces) + to_int(mTurn)] ^= Utils::westOne(startBitboard) | Utils::westOne(Utils::westOne(endBitboard));
             mZobristHash ^= mZobristTable.mPSQ[to_int(PieceSets::WhiteRooks) + to_int(mTurn)][to_int(Utils::westOne(startingSquare))];
             mZobristHash ^= mZobristTable.mPSQ[to_int(PieceSets::WhiteRooks) + to_int(mTurn)][to_int(Utils::westOne(Utils::westOne(endingSquare)))];
             mSquareBoard[to_int(Utils::westOne(Utils::westOne(endingSquare)))] = PieceSets::EmptySquares;
@@ -248,11 +251,13 @@ void ChessBoard::makeMove(const Move& nextMove)
         mSquareBoard[to_int(endingSquare)] = PieceSets((to_int(promotion) << 1) + 2 + to_int(mTurn));
     } else if (type == MoveType::Enpassant) {
         if (movedPiece == PieceSets::WhitePawns) {
-            mPieceBB[to_int(PieceSets::BlackPawns)] &= ~Utils::southOne(endBitboard);
+            mPieceBB[to_int(PieceSets::BlackPawns)] ^= Utils::southOne(endBitboard);
+            mPieceBB[to_int(PieceSets::BlackPieces)] ^= Utils::southOne(endBitboard);
             mSquareBoard[to_int(Utils::southOne(endingSquare))] = PieceSets::EmptySquares;
             mZobristHash ^= mZobristTable.mPSQ[to_int(PieceSets::BlackPawns)][to_int(Utils::southOne(endingSquare))];
         } else {
-            mPieceBB[to_int(PieceSets::WhitePawns)] &= ~Utils::northOne(endBitboard);
+            mPieceBB[to_int(PieceSets::WhitePawns)] ^= Utils::northOne(endBitboard);
+            mPieceBB[to_int(PieceSets::WhitePieces)] ^= Utils::northOne(endBitboard);
             mSquareBoard[to_int(Utils::northOne(endingSquare))] = PieceSets::EmptySquares;
             mZobristHash ^= mZobristTable.mPSQ[to_int(PieceSets::BlackPawns)][to_int(Utils::northOne(endingSquare))];
         }
@@ -266,7 +271,7 @@ void ChessBoard::makeMove(const Move& nextMove)
         mZobristHash ^= mZobristTable.mEnpassant[Utils::getColumn(Utils::getSquare(mEnpassantTarget))];
     }
 
-    updateRedundantBitboards();
+    mPieceBB[to_int(PieceSets::AllPieces)] = mPieceBB[to_int(PieceSets::WhitePieces)] | mPieceBB[to_int(PieceSets::BlackPieces)];
     updateCastlingRights();
     mTurn = !mTurn;
     updatePinnedPieces(mTurn);
@@ -354,35 +359,45 @@ void ChessBoard::undoMove()
     PieceSets capturedPiece = state.mCapturedPiece;
 
     mPieceBB[to_int(movedPiece)] ^= startBitboard | endBitboard;
-    mPieceBB[to_int(capturedPiece)] |= endBitboard;
+    mPieceBB[to_int(PieceSets::WhitePieces) + to_int(mTurn)] ^= startBitboard | endBitboard;
+
+    if (capturedPiece != PieceSets::EmptySquares) {
+        mPieceBB[to_int(capturedPiece)] ^= endBitboard;
+        mPieceBB[to_int(PieceSets::WhitePieces) + to_int(!mTurn)] ^= endBitboard;
+    }
+
     mSquareBoard[to_int(startingSquare)] = movedPiece;
     mSquareBoard[to_int(endingSquare)] = capturedPiece;
 
     if (type == MoveType::Castle) {
         if (to_int(startingSquare) < to_int(endingSquare)) {
             mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] ^= Utils::eastOne(startBitboard) | Utils::eastOne(endBitboard);
+            mPieceBB[to_int(PieceSets::WhitePieces) + to_int(mTurn)] ^= Utils::eastOne(startBitboard) | Utils::eastOne(endBitboard);
             mSquareBoard[to_int(Utils::eastOne(endingSquare))] = PieceSets(to_int(PieceSets::WhiteRooks) + to_int(mTurn));
             mSquareBoard[to_int(Utils::eastOne(startingSquare))] = PieceSets::EmptySquares;
         } else {
             mPieceBB[to_int(PieceSets::WhiteRooks) + to_int(mTurn)] ^= Utils::westOne(startBitboard) | Utils::westOne(Utils::westOne(endBitboard));
+            mPieceBB[to_int(PieceSets::WhitePieces) + to_int(mTurn)] ^= Utils::westOne(startBitboard) | Utils::westOne(Utils::westOne(endBitboard));
             mSquareBoard[to_int(Utils::westOne(Utils::westOne(endingSquare)))] = PieceSets(to_int(PieceSets::WhiteRooks) + to_int(mTurn));
             mSquareBoard[to_int(Utils::westOne(startingSquare))] = PieceSets::EmptySquares;
         }
     } else if (type == MoveType::Promotion) {
-        mPieceBB[to_int(movedPiece)] &= ~startBitboard;
-        mPieceBB[to_int(PieceSets::WhitePawns) + to_int(mTurn)] |= startBitboard;
+        mPieceBB[to_int(movedPiece)] ^= startBitboard;
+        mPieceBB[to_int(PieceSets::WhitePawns) + to_int(mTurn)] ^= startBitboard;
         mSquareBoard[to_int(startingSquare)] = PieceSets(to_int(PieceSets::WhitePawns) + to_int(mTurn));
     } else if (type == MoveType::Enpassant) {
         if (movedPiece == PieceSets::WhitePawns) {
-            mPieceBB[to_int(PieceSets::BlackPawns)] |= Utils::southOne(endBitboard);
+            mPieceBB[to_int(PieceSets::BlackPawns)] ^= Utils::southOne(endBitboard);
+            mPieceBB[to_int(PieceSets::BlackPieces)] ^= Utils::southOne(endBitboard);
             mSquareBoard[to_int(Utils::southOne(endingSquare))] = PieceSets::BlackPawns;
         } else {
-            mPieceBB[to_int(PieceSets::WhitePawns)] |= Utils::northOne(endBitboard);
+            mPieceBB[to_int(PieceSets::WhitePawns)] ^= Utils::northOne(endBitboard);
+            mPieceBB[to_int(PieceSets::WhitePieces)] ^= Utils::northOne(endBitboard);
             mSquareBoard[to_int(Utils::northOne(endingSquare))] = PieceSets::WhitePawns;
         }
     }
-    updateRedundantBitboards();
 
+    mPieceBB[to_int(PieceSets::AllPieces)] = mPieceBB[to_int(PieceSets::WhitePieces)] | mPieceBB[to_int(PieceSets::BlackPieces)];
     mStateHistory.pop_back();
 }
 
@@ -435,7 +450,6 @@ bool ChessBoard::isLegal(const Move& move)
     Bitboard startLoc = Utils::getBitboard(startSquare);
     Bitboard endLoc = Utils::getBitboard(endSquare);
     Bitboard blockers = getAllPieces();
-    //Bitboard enemyPieces = getPieces(!mTurn);
 
     if (type == MoveType::Castle) {
         if (endLoc > startLoc) {
@@ -522,12 +536,7 @@ Bitboard ChessBoard::squareBlockers(Square sq, Color turn) const
 bool ChessBoard::isLegalPinnedMove(Square startSquare, Square endSquare, Color turn) const
 {
     Bitboard pinned = Utils::getBitboard(startSquare) & getPinnedPieces();
-
-    if (!pinned) {
-        return true;
-    }
-
-    return mAttack->inLine(startSquare, endSquare) & getKing(turn);
+    return !pinned ? true : mAttack->inLine(startSquare, endSquare) & getKing(turn);
 }
 
 void ChessBoard::updateChessBoard(const std::string& layout)
@@ -677,4 +686,61 @@ bool ChessBoard::containsPromotingPawns() const
 bool ChessBoard::isCapture(const Move& move) const
 {
     return Utils::getBitboard(move.getEndingSquare()) & getPieces(!mTurn);
+}
+
+bool ChessBoard::isPseudoLegal(Move move) const
+{
+    Square fromSq = move.getStartingSquare();
+    Square toSq = move.getEndingSquare();
+    Bitboard fromBitboard = Utils::getBitboard(fromSq);
+    Bitboard toBitboard = Utils::getBitboard(toSq);
+    PieceSets movedPiece = mSquareBoard[to_int(fromSq)];
+
+    if (movedPiece == PieceSets::EmptySquares) {
+        return false;
+    }
+
+    // TODO
+    switch (movedPiece) {
+        case PieceSets::WhitePawns:
+        {
+            Bitboard southOne = Utils::southOne(toBitboard);
+            Bitboard southTwo = Utils::southOne(southOne);
+            bool onePawnPush = southOne & fromBitboard && toBitboard & ~getAllPieces();
+            bool twoPawnPush = southTwo & fromBitboard && (toBitboard|southOne) & ~getAllPieces();
+            return mAttack->getPawnAttacks(fromSq, mTurn) & toBitboard & getPieces(!mTurn) || onePawnPush || twoPawnPush;
+        }
+
+        case PieceSets::BlackPawns:
+        {
+            Bitboard northOne = Utils::northOne(toBitboard);
+            Bitboard northTwo = Utils::northOne(northOne);
+            bool onePawnPush = northOne & fromBitboard && toBitboard & ~getAllPieces();
+            bool twoPawnPush = northTwo & fromBitboard && (toBitboard|northOne) & ~getAllPieces();
+            return mAttack->getPawnAttacks(fromSq, mTurn) || onePawnPush || twoPawnPush;
+        }
+    
+        case PieceSets::WhiteKnights:
+        case PieceSets::BlackKnights:
+            return mAttack->getKnightAttacks(fromSq) & toBitboard & ~getPieces(mTurn);
+    
+        case PieceSets::WhiteBishops:
+        case PieceSets::BlackBishops:
+            return mAttack->getBishopAttacks(fromSq, getAllPieces()) & toBitboard & ~getPieces(mTurn);
+
+        case PieceSets::WhiteRooks:
+        case PieceSets::BlackRooks:
+            return mAttack->getRookAttacks(fromSq, getAllPieces()) & toBitboard & ~getPieces(mTurn);
+
+        case PieceSets::WhiteQueens:
+        case PieceSets::BlackQueens:
+            return mAttack->getQueenAttacks(fromSq, getAllPieces()) & toBitboard & ~getPieces(mTurn);
+
+        case PieceSets::WhiteKing:
+        case PieceSets::BlackKing:
+            return mAttack->getKingAttacks(fromSq) & toBitboard & ~getPieces(mTurn);
+            
+        default:
+            return false;
+    }
 }

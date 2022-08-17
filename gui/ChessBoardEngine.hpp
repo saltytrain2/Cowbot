@@ -24,6 +24,7 @@ public:
     std::string toAlgebraic(Cowbot::Move move);
     void appendCheckOrMate(std::string& move);
     Cowbot::Move search();
+    uint64_t getHash() const;
     
 
 private:
@@ -47,7 +48,7 @@ ChessBoardEngine::ChessBoardEngine()
       mSearch(&mBoard, &mMoveGen, &mFakeEval, &mTT, &mMoveOrdering)
 {
     mAttack.initTables();
-    mTT.setSize(1024);
+    mTT.setSize(2048);
     mLegalMoves = mMoveGen.generateLegalMoves(mBoard.getTurn());
 }
 
@@ -125,4 +126,9 @@ void ChessBoardEngine::appendCheckOrMate(std::string& move)
 Cowbot::Move ChessBoardEngine::search()
 {
     return mSearch.search(6).first;
+}
+
+uint64_t ChessBoardEngine::getHash() const
+{
+    return mBoard.getHash();
 }

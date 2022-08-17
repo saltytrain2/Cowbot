@@ -203,8 +203,7 @@ int16_t FakeEval::eval(const ChessBoard& board)
     int16_t egScore = eg[to_int(Color::White)] - mg[to_int(Color::Black)];
     uint8_t mgPhase = phase > 24 ? 24 : phase;
     uint8_t egPhase = 24 - mgPhase;
-    int16_t score = (mgScore * mgPhase + egScore * egPhase) / 24;
-    return board.getTurn() == Color::White ? score : -score;
+    return (mgScore * mgPhase + egScore * egPhase) / 24;
 }
 
 int16_t FakeEval::getPieceValue(PieceSets piece)

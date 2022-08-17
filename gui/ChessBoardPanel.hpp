@@ -12,7 +12,7 @@
 #include "ChessBoardPiece.hpp"
 #include "ChessBoardEngine.hpp"
 #include "ChessBoardEvent.hpp"
-#include "ChessPieces.hpp"
+#include "ChessPieces.h"
 #include "Move.h"
 #include "types.h"
 #include "Utils.h"
@@ -67,6 +67,7 @@ ChessBoardPanel::ChessBoardPanel(wxWindow* parent)
     setBoard();
 
     Show();
+    std::cout << std::hex << mEngine->getHash() << std::endl;
 
     Bind(wxEVT_PAINT, &ChessBoardPanel::OnPaint, this);
     Bind(wxEVT_LEFT_DOWN, &ChessBoardPanel::OnLeftDown, this);

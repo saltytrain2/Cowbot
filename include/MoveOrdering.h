@@ -17,7 +17,7 @@ class MoveOrdering
 public:
     MoveOrdering(ChessBoard* board, FakeEval* fakeEval);
     void orderMoves(moveVectorIter begin, moveVectorIter end) const;
-    void orderMovesQuiescent(moveVectorIter begin, moveVectorIter end, int16_t standpat, int16_t alpha) const;
+    void orderMovesQuiescent(moveVectorIter begin, moveVectorIter end) const;
     void addHistory(Move move, uint16_t depth);
     void clearHistory();
     uint32_t getHistory(Move move) const;

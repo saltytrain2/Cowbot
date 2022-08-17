@@ -35,8 +35,6 @@ void Move::updateMove(std::string lan)
         }
         newMove |= 1 << 15;
     }   
-    //uint16_t startingSquare = 8 * (lan[1]-'1') + (lan[0] - 'a');
-    //uint16_t endingSquare = 8 * (lan[3]-'1') + (lan[2] - 'a');
     Square startingSquare = Square(8 * (lan[1] - '1') + (lan[0] - 'a'));
     Square endingSquare = Square(8 * (lan[3] - '1') + (lan[2] - 'a'));
 

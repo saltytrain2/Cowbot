@@ -18,9 +18,9 @@ void MoveOrdering::orderMoves(moveVectorIter begin, moveVectorIter end) const
     MvvLva(begin, captureEnd);
     orderHistory(captureEnd, end);
 }
-void MoveOrdering::orderMovesQuiescent(moveVectorIter begin, moveVectorIter end, int16_t standpat, int16_t alpha) const
+void MoveOrdering::orderMovesQuiescent(moveVectorIter begin, moveVectorIter end) const
 {
-    deltaPruning(begin, end, standpat, alpha);
+    MvvLva(begin, end);
 }
 
 moveVectorIter MoveOrdering::orderCapturesFirst(moveVectorIter begin, moveVectorIter end) const
@@ -29,7 +29,7 @@ moveVectorIter MoveOrdering::orderCapturesFirst(moveVectorIter begin, moveVector
     Color self = Color(to_int(mBoard->getPiece(begin->getStartingSquare())) & 1);
     Bitboard enemyPieces = mBoard->getPieces(!self);
     for (auto i = begin; i != end; ++i) {
-        if (Utils::getBitboard(i->getEndingSquare()) & enemyPieces) {
+        if (Utils::getBitboard(i->getEndingSquare()) & enemyPieces || i->getMoveType() == MoveType::Enpassant) {
             std::swap(*i, *currentIter);
             ++currentIter;
         }
@@ -47,6 +47,7 @@ void MoveOrdering::deltaPruning(moveVectorIter begin, moveVectorIter end, int16_
 
     // sort by highest value capture, ties broken by lowest value capturer
     MvvLva(begin, it);
+    MvvLva(it, end);
 }
 
 void MoveOrdering::addHistory(Move move, uint16_t depth)
@@ -72,7 +73,7 @@ void MoveOrdering::MvvLva(moveVectorIter begin, moveVectorIter end) const
         PieceSets yMovedPiece = mBoard->getPiece(x.getStartingSquare());
         int16_t xEval = mFakeEval->getPieceValue(xCapturedPiece) - mFakeEval->getPieceValue(xMovedPiece);
         int16_t yEval = mFakeEval->getPieceValue(yCapturedPiece) - mFakeEval->getPieceValue(yMovedPiece);
-        return xEval < yEval;
+        return xEval > yEval;
     };
     std::sort(begin, end, sortVictims);
 }
@@ -82,7 +83,7 @@ void MoveOrdering::orderHistory(moveVectorIter begin, moveVectorIter end) const
     auto compare = [this](Move x, Move y) {
         uint32_t xHistory = getHistory(x);
         uint32_t yHistory = getHistory(y);
-        return xHistory < yHistory;
+        return xHistory > yHistory;
     };
     std::sort(begin, end, compare);
 }

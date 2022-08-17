@@ -45,10 +45,10 @@ TEST_CASE("Mate in 2") {
     CHECK(res.toString() == "d3f1");
     std::cout << "time: " << double(microseconds.count()) / 1000000 << std::endl;
 
-    // board->updateChessBoard("r3k2r/p1ppqpb1/Bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPB1PPP/R3K2R b KQkq - 0 1");
-    // start = std::chrono::system_clock::now();
-    // res = search->search(6).first;
-    // end = std::chrono::system_clock::now();
-    // microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    // std::cout << "best move: " << res.toString() << " time: " << double(microseconds.count()) / 1000000 << std::endl;
+    board->updateChessBoard("r3k2r/p1ppqpb1/Bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPB1PPP/R3K2R b KQkq - 0 1");
+    start = std::chrono::system_clock::now();
+    res = search->search(6).first;
+    end = std::chrono::system_clock::now();
+    microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "best move: " << res.toString() << " time: " << double(microseconds.count()) / 1000000 << std::endl;
 }
