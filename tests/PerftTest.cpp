@@ -54,7 +54,6 @@ uint64_t perft(MoveGen* moveGen, ChessBoard* board, int depth)
 
 TEST_CASE("Perft") {
     auto attack = std::make_shared<Attack>();
-    attack->initTables();
     auto board = std::make_shared<ChessBoard>(attack.get());
     auto moveGen = std::make_shared<MoveGen>(board.get(), attack.get());
 

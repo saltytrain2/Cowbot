@@ -11,7 +11,6 @@ using namespace Cowbot;
 
 TEST_CASE("Move Generation") {
     auto attack = std::make_shared<Attack>();
-    attack->initTables();
     auto board = std::make_shared<ChessBoard>(attack.get());
     MoveGen moveGenerator(board.get(), attack.get());
     SUBCASE("Starting Position") {

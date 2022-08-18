@@ -9,7 +9,6 @@ using namespace Cowbot;
 
 TEST_CASE("standard game") {
     auto attack = std::make_shared<Attack>();
-    attack->initTables();
     ChessBoard board(attack.get());
     board.updateChessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     CHECK(board.getTurn() == Color::White);

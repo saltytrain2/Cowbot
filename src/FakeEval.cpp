@@ -189,9 +189,10 @@ int16_t FakeEval::eval(const ChessBoard& board)
     int16_t eg[2] = {};
     int8_t phase = 0;
 
-    for (Square sq = Square::A1; sq < Square::Null; ++sq) {
-        PieceSets piece = board.getPiece(sq);
-        if (piece != PieceSets::EmptySquares) {
+    for (PieceSets piece = PieceSets::WhitePawns; piece != PieceSets::WhitePieces; ++piece) {
+        Bitboard pieces = board.getPieces(piece);
+        while (pieces) {
+            Square sq = Utils::popLSB(pieces);
             mg[to_int(piece) & 1] += mMGTable[to_int(piece)][to_int(sq)];
             eg[to_int(piece) & 1] += mEGTable[to_int(piece)][to_int(sq)];
             phase += GAMEPHASE[to_int(piece)];

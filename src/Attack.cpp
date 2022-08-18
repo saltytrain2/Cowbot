@@ -59,17 +59,8 @@ static constexpr uint8_t ROOK_SHIFTS[64] = {
     12, 11, 11, 11, 11, 11, 11, 12
 };
 
-Bitboard Attack::mBishopMasks[64];
-Bitboard Attack::mRookMasks[64];
-Bitboard Attack::mPawnAttacks[2][64];
-Bitboard Attack::mKingAttacks[64];
-Bitboard Attack::mKnightAttacks[64];
-Bitboard Attack::mBishopAttacks[64][512];
-Bitboard Attack::mRookAttacks[64][4096];
-Bitboard Attack::mBetweenRectangular[64][64];
-Bitboard Attack::mLined[64][64];
 
-void Attack::initTables()
+Attack::Attack()
 {
     initPawnAttacks();
     initKingAttacks();

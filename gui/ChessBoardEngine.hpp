@@ -48,7 +48,6 @@ ChessBoardEngine::ChessBoardEngine()
       mMoveOrdering(&mBoard, &mFakeEval),
       mSearch(&mBoard, &mMoveGen, &mFakeEval, &mTT, &mMoveOrdering)
 {
-    mAttack.initTables();
     mTT.setSize(1024);
     mLegalMoves = mMoveGen.generateLegalMoves(mBoard.getTurn());
 }

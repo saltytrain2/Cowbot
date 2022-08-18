@@ -9,7 +9,6 @@ using namespace Cowbot;
 
 TEST_CASE("Attack Bitboards") {
     auto attackBoards = std::make_shared<Attack>();
-    attackBoards->initTables();
 
     SUBCASE("Pawn Bitboards") {
         CHECK(attackBoards->getPawnAttacks(Square::A2, Color::White) == 0x20000);
