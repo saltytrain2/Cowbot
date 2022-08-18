@@ -44,7 +44,7 @@ private:
     int mHeight;
     std::array<wxImage, 13> mPieces;
     std::array<ChessBoardPiece, 64> mBoard;
-    std::unique_ptr<ChessBoardEngine> mEngine;
+    ChessBoardEngine mEngine;
     wxImage mToDrag;
     wxDragImage* mDragImage;
     wxPoint mStartPos;
@@ -56,7 +56,7 @@ ChessBoardPanel::ChessBoardPanel(wxWindow* parent)
       mWidth(),
       mHeight(),
       mPieces(),
-      mEngine(std::make_unique<ChessBoardEngine>()),
+      mEngine(),
       mDragImage(nullptr)
 
 {
@@ -67,7 +67,6 @@ ChessBoardPanel::ChessBoardPanel(wxWindow* parent)
     setBoard();
 
     Show();
-    std::cout << std::hex << mEngine->getHash() << std::endl;
 
     Bind(wxEVT_PAINT, &ChessBoardPanel::OnPaint, this);
     Bind(wxEVT_LEFT_DOWN, &ChessBoardPanel::OnLeftDown, this);
@@ -112,8 +111,6 @@ void ChessBoardPanel::OnPaint(wxPaintEvent&)
 Square ChessBoardPanel::getSquare(const wxPoint& point) const
 {
     int row = 8 * point.y / mHeight, file = 8 * point.x / mWidth;
-
-    // wxLogMessage("x:%d y:%d width:%d height:%d row:%d file:%d", point.x, point.y, mWidth, mHeight, row, file);
 
     if (row < 0 || file < 0 || row > 7 || file > 7) {
         return Square::Null;
@@ -172,7 +169,7 @@ void ChessBoardPanel::OnLeftUp(wxMouseEvent& evt)
     wxDELETE(mDragImage);
     Square endingSquare = getSquare(evt.GetPosition());
     mBoard[to_int(mCurrentSq)].setShow(true);
-    Cowbot::Move move = mEngine->isLegal(mCurrentSq, endingSquare);
+    Cowbot::Move move = mEngine.isLegal(mCurrentSq, endingSquare);
 
     if (endingSquare == Square::Null || mCurrentSq == endingSquare || !move) {
         Refresh(true);
@@ -180,9 +177,9 @@ void ChessBoardPanel::OnLeftUp(wxMouseEvent& evt)
         return;
     }
 
-    std::string algebraic = mEngine->toAlgebraic(move);
+    std::string algebraic = mEngine.toAlgebraic(move);
     makeMove(move);
-    mEngine->appendCheckOrMate(algebraic);
+    mEngine.appendCheckOrMate(algebraic);
 
     ChessBoardEvent chessEvt(EVT_PIECE_MOVED, GetId(), algebraic);
     chessEvt.SetEventObject(this);
@@ -228,7 +225,7 @@ void ChessBoardPanel::resizePieces(std::array<ChessBoardPiece, 64>& board, int w
 void ChessBoardPanel::setBoard()
 {
     for (Square sq = Square::A1; sq < Square::Null; ++sq) {
-        PieceSets piece = mEngine->getPiece(sq);
+        PieceSets piece = mEngine.getPiece(sq);
         if (piece != PieceSets::EmptySquares) {
             mBoard[to_int(sq)].setImage(mPieces[to_int(piece)]);
         }
@@ -241,7 +238,7 @@ void ChessBoardPanel::makeMove(Cowbot::Move move)
     Square to = move.getEndingSquare();
     std::swap(mBoard[to_int(from)], mBoard[to_int(to)]);
 
-    if (mEngine->isOccupied(to)) {
+    if (mEngine.isOccupied(to)) {
         mBoard[to_int(from)].setImage(wxImage());
     }
 
@@ -271,17 +268,17 @@ void ChessBoardPanel::makeMove(Cowbot::Move move)
         }
     }
 
-    mEngine->makeMove(move);
+    mEngine.makeMove(move);
     Refresh(true);
     Update();
 }
 
 void ChessBoardPanel::OnComputerTurn()
 {
-    Cowbot::Move bestMove = mEngine->search();
-    std::string algebraic = mEngine->toAlgebraic(bestMove);
+    Cowbot::Move bestMove = mEngine.search();
+    std::string algebraic = mEngine.toAlgebraic(bestMove);
     makeMove(bestMove);
-    mEngine->appendCheckOrMate(algebraic);
+    mEngine.appendCheckOrMate(algebraic);
 
     ChessBoardEvent chessEvt(EVT_PIECE_MOVED, GetId(), algebraic);
     chessEvt.SetEventObject(this);

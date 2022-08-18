@@ -25,7 +25,7 @@ private:
     TT* mTT;
     MoveOrdering* mMoveOrdering;
 
-    int16_t alphaBeta(int16_t alpha, int16_t beta, uint8_t depthleft, uint8_t pliesFromRoot);
+    int16_t alphaBeta(int16_t alpha, int16_t beta, uint8_t depthleft);
     int16_t qsearch(int16_t alpha, int16_t beta);
 };
 } // namespace Cowbot

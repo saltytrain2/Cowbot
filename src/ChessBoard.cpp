@@ -270,6 +270,7 @@ void ChessBoard::makeMove(const Move& nextMove)
         // use the fact that the enpassant target is going to be one set bit on the 6th rank to determine row num
         mZobristHash ^= mZobristTable.mEnpassant[Utils::getColumn(Utils::getSquare(mEnpassantTarget))];
     }
+    mZobristHash ^= mZobristTable.mTurn;
 
     mPieceBB[to_int(PieceSets::AllPieces)] = mPieceBB[to_int(PieceSets::WhitePieces)] | mPieceBB[to_int(PieceSets::BlackPieces)];
     updateCastlingRights();
@@ -649,11 +650,26 @@ void ChessBoard::initZobristHashes()
 
 void ChessBoard::updateZobristHash()
 {
+    mZobristHash = 0;
     for (PieceSets i = PieceSets::WhitePawns; i < PieceSets::WhitePieces; ++i) {
         Bitboard pieces = mPieceBB[to_int(i)];
         while (pieces) {
             mZobristHash ^= mZobristTable.mPSQ[to_int(i)][to_int(Utils::popLSB(pieces))];
         }
+    }
+    
+    for (int i = 0; i < 4; ++i) {
+        if (mCastle[i]) {
+            mZobristHash ^= mZobristTable.mCastling[i];
+        } 
+    }
+
+    if (mEnpassantTarget) {
+        mZobristHash ^= mZobristTable.mEnpassant[Utils::getColumn(Utils::getSquare(mEnpassantTarget))];
+    }
+
+    if (mTurn == Color::White) {
+        mZobristHash ^= mZobristTable.mTurn;
     }
 }
 

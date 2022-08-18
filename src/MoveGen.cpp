@@ -444,13 +444,13 @@ void MoveGen::generateLegalEvasiveKnightMoves(Color color, Bitboard checkers, st
     }
 
     Bitboard knights = mBoard->getKnights(color);
-    Bitboard blockers = mBoard->getPieces(color);
     Square kingSquare = Utils::getSquare(mBoard->getKing(color));
+    Bitboard validTargets = checkers | mAttack->inBetween(kingSquare, Utils::getSquare(checkers));
 
     while (knights) {
         Square startSquare = Utils::popLSB(knights);
         Bitboard attacks = mAttack->getKnightAttacks(startSquare);
-        attacks &= ~blockers;
+        attacks &= validTargets;
         while (attacks) {
             Square endSquare = Utils::popLSB(attacks);
             if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare) || Utils::getBitboard(endSquare) & checkers) {
@@ -471,13 +471,13 @@ void MoveGen::generateLegalEvasiveBishopMoves(Color color, Bitboard checkers, st
 
     Bitboard bishops = mBoard->getBishops(color);
     Bitboard blockers = mBoard->getAllPieces();
-    Bitboard ownPieces = mBoard->getPieces(color);
     Square kingSquare = Utils::getSquare(mBoard->getKing(color));
+    Bitboard validTargets = checkers | mAttack->inBetween(kingSquare, Utils::getSquare(checkers));
 
     while (bishops) {
         Square startSquare = Utils::popLSB(bishops);
         Bitboard attacks = mAttack->getBishopAttacks(startSquare, blockers);
-        attacks &= ~ownPieces;
+        attacks &= validTargets;
         while (attacks) {
             Square endSquare = Utils::popLSB(attacks);
             if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare) || Utils::getBitboard(endSquare) & checkers) {
@@ -498,13 +498,13 @@ void MoveGen::generateLegalEvasiveRookMoves(Color color, Bitboard checkers, std:
 
     Bitboard rooks = mBoard->getRooks(color);
     Bitboard blockers = mBoard->getAllPieces();
-    Bitboard ownPieces = mBoard->getPieces(color);
     Square kingSquare = Utils::getSquare(mBoard->getKing(color));
+    Bitboard validTargets = checkers | mAttack->inBetween(kingSquare, Utils::getSquare(checkers));
 
     while (rooks) {
         Square startSquare = Utils::popLSB(rooks);
         Bitboard attacks = mAttack->getRookAttacks(startSquare, blockers);
-        attacks &= ~ownPieces;
+        attacks &= validTargets;
         while (attacks) {
             Square endSquare = Utils::popLSB(attacks);
             if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare) || Utils::getBitboard(endSquare) & checkers) {
@@ -525,13 +525,13 @@ void MoveGen::generateLegalEvasiveQueenMoves(Color color, Bitboard checkers, std
 
     Bitboard queens = mBoard->getQueens(color);
     Bitboard blockers = mBoard->getAllPieces();
-    Bitboard ownPieces = mBoard->getPieces(color);
     Square kingSquare = Utils::getSquare(mBoard->getKing(color));
+    Bitboard validTargets = checkers | mAttack->inBetween(kingSquare, Utils::getSquare(checkers));
 
     while (queens) {
         Square startSquare = Utils::popLSB(queens);
         Bitboard attacks = mAttack->getQueenAttacks(startSquare, blockers);
-        attacks &= ~ownPieces;
+        attacks &= validTargets;
         while (attacks) {
             Square endSquare = Utils::popLSB(attacks);
             if (mAttack->inBetween(kingSquare, Utils::getSquare(checkers)) & Utils::getBitboard(endSquare) || Utils::getBitboard(endSquare) & checkers) {

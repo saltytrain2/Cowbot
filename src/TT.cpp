@@ -52,14 +52,12 @@ void TT::setSize(uint32_t mb)
 {
     uint32_t numElements = mb * 1024 * 1024 / sizeof(TTEntry);
 
-    // most optimal solution doesn't matter since this is called
-    // infrequently outside of search
     uint64_t size = 1;
     while (numElements > size) {
         size <<= 1;
     }
     
+    std::fill(mTT.begin(), mTT.end(), TTEntry());
     mTT.resize(size);
-    mTT.clear();
     mask = size - 1;
 }

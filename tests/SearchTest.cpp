@@ -19,14 +19,15 @@ TEST_CASE("Mate in 2") {
     std::ios::sync_with_stdio(false);
 
     auto attack = std::make_shared<Attack>();
-    attack->initTables();
     auto board = std::make_shared<ChessBoard>(attack.get());
     auto moveGen = std::make_shared<MoveGen>(board.get(), attack.get());
     auto fakeEval = std::make_shared<FakeEval>();
     auto tt = std::make_shared<TT>();
     auto moveOrdering = std::make_shared<MoveOrdering>(board.get(), fakeEval.get());
     auto search = std::make_shared<Search>(board.get(), moveGen.get(), fakeEval.get(), tt.get(), moveOrdering.get());
-    tt->setSize(2048);
+    attack->initTables();
+    tt->setSize(1024);
+    std::cout << std::hex << board->getHash() << std::endl;
 
 
     board->updateChessBoard("2bqkbn1/2pppp2/np2N3/r3P1p1/p2N2B1/5Q2/PPPPKPP1/RNB2r2 w KQkq - 0 1");

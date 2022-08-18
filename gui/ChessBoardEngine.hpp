@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "Attack.h"
 #include "ChessBoard.h"
@@ -48,7 +49,7 @@ ChessBoardEngine::ChessBoardEngine()
       mSearch(&mBoard, &mMoveGen, &mFakeEval, &mTT, &mMoveOrdering)
 {
     mAttack.initTables();
-    mTT.setSize(2048);
+    mTT.setSize(1024);
     mLegalMoves = mMoveGen.generateLegalMoves(mBoard.getTurn());
 }
 
