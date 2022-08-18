@@ -26,7 +26,7 @@ TEST_CASE("Mate in 2") {
     auto moveOrdering = std::make_shared<MoveOrdering>(board.get(), fakeEval.get());
     auto search = std::make_shared<Search>(board.get(), moveGen.get(), fakeEval.get(), tt.get(), moveOrdering.get());
     attack->initTables();
-    tt->setSize(1024);
+    tt->setSize(128);
     std::cout << std::hex << board->getHash() << std::endl;
 
 
