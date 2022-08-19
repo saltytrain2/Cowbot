@@ -19,6 +19,10 @@ set(MY_LINK_FLAGS
     $<$<CONFIG:Debug>:-fsanitize=address>
 )
 
+if (BUILD_TESTS)
+    enable_testing()
+endif ()
+
 add_subdirectory(src)
 add_subdirectory(tests)
 add_subdirectory(gui)
