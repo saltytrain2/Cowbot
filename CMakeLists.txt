@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(chess-engine LANGUAGES CXX)
 
-option(BUILD_GUI "build the gui that comes with this program" OFF)
+option(BUILD_GUI "build the gui that comes with this program" ON)
+option(BUILD_TESTS "build the test suite" ON)
 
 # Set compiler flags
 set(CMAKE_CXX_STANDARD 17)
@@ -18,7 +19,6 @@ set(MY_LINK_FLAGS
     $<$<CONFIG:Debug>:-fsanitize=address>
 )
 
-enable_testing()
 add_subdirectory(src)
 add_subdirectory(tests)
 add_subdirectory(gui)
