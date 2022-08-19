@@ -31,7 +31,7 @@ TEST_CASE("Mate in 2") {
 
     board->updateChessBoard("2bqkbn1/2pppp2/np2N3/r3P1p1/p2N2B1/5Q2/PPPPKPP1/RNB2r2 w KQkq - 0 1");
     auto start = std::chrono::system_clock::now();
-    auto res = search->search(4).first;
+    auto res = search->search(6).first;
     auto end = std::chrono::system_clock::now();
     auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     CHECK(res.toString() == "f3f7");

@@ -7,7 +7,7 @@ namespace Cowbot {
 class Move
 {
 public:
-    Move() = default;
+    Move();
     explicit Move(std::string lan);
     explicit Move(Bitmove src);
     Move(Square startSquare, Square endSquare, MoveType type, PromotionPiece piece = PromotionPiece::Null);

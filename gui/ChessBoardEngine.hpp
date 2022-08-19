@@ -29,32 +29,32 @@ public:
     
 
 private:
-    Cowbot::Attack mAttack;
-    Cowbot::ChessBoard mBoard;
-    Cowbot::MoveGen mMoveGen;
-    Cowbot::FakeEval mFakeEval;
-    Cowbot::TT mTT;
-    Cowbot::MoveOrdering mMoveOrdering;
-    Cowbot::Search mSearch;
+    std::unique_ptr<Cowbot::Attack> mAttack;
+    std::unique_ptr<Cowbot::ChessBoard> mBoard;
+    std::unique_ptr<Cowbot::MoveGen> mMoveGen;
+    std::unique_ptr<Cowbot::FakeEval> mFakeEval;
+    std::unique_ptr<Cowbot::TT> mTT;
+    std::unique_ptr<Cowbot::MoveOrdering> mMoveOrdering;
+    std::unique_ptr<Cowbot::Search> mSearch;
     std::vector<Cowbot::Move> mLegalMoves;
 };
 
 ChessBoardEngine::ChessBoardEngine()
-    : mAttack(),
-      mBoard(&mAttack),
-      mMoveGen(&mBoard, &mAttack),
-      mFakeEval(),
-      mTT(),
-      mMoveOrdering(&mBoard, &mFakeEval),
-      mSearch(&mBoard, &mMoveGen, &mFakeEval, &mTT, &mMoveOrdering)
+    : mAttack(std::make_unique<Cowbot::Attack>()),
+      mBoard(std::make_unique<Cowbot::ChessBoard>(mAttack.get())),
+      mMoveGen(std::make_unique<Cowbot::MoveGen>(mBoard.get(), mAttack.get())),
+      mFakeEval(std::make_unique<Cowbot::FakeEval>()),
+      mTT(std::make_unique<Cowbot::TT>()),
+      mMoveOrdering(std::make_unique<Cowbot::MoveOrdering>(mBoard.get(), mFakeEval.get())),
+      mSearch(std::make_unique<Cowbot::Search>(mBoard.get(), mMoveGen.get(), mFakeEval.get(), mTT.get(), mMoveOrdering.get()))
 {
-    mTT.setSize(1024);
-    mLegalMoves = mMoveGen.generateLegalMoves(mBoard.getTurn());
+    mTT->setSize(1024);
+    mLegalMoves = mMoveGen->generateLegalMoves(mBoard->getTurn());
 }
 
 PieceSets ChessBoardEngine::getPiece(Square sq) const
 {
-    return mBoard.getPiece(sq);
+    return mBoard->getPiece(sq);
 }
 
 Cowbot::Move ChessBoardEngine::isLegal(Square from, Square to)
@@ -69,13 +69,13 @@ Cowbot::Move ChessBoardEngine::isLegal(Square from, Square to)
 
 void ChessBoardEngine::makeMove(Cowbot::Move move)
 {
-    mBoard.makeMove(move);
-    mLegalMoves = mMoveGen.generateLegalMoves(mBoard.getTurn());
+    mBoard->makeMove(move);
+    mLegalMoves = mMoveGen->generateLegalMoves(mBoard->getTurn());
 }
 
 bool ChessBoardEngine::isOccupied(Square sq)
 {
-    return Cowbot::Utils::getBitboard(sq) & mBoard.getAllPieces();
+    return Cowbot::Utils::getBitboard(sq) & mBoard->getAllPieces();
 }
 
 std::string ChessBoardEngine::toAlgebraic(Cowbot::Move move)
@@ -83,7 +83,7 @@ std::string ChessBoardEngine::toAlgebraic(Cowbot::Move move)
     std::string algebraic;
     Square from = move.getStartingSquare();
     Square to = move.getEndingSquare();
-    PieceSets movedPiece = mBoard.getPiece(from);
+    PieceSets movedPiece = mBoard->getPiece(from);
     bool isCapture = isOccupied(to) || move.getMoveType() == MoveType::Enpassant;
 
     if ((movedPiece == PieceSets::WhitePawns || movedPiece == PieceSets::BlackPawns) && isCapture) {
@@ -118,17 +118,17 @@ std::string ChessBoardEngine::toAlgebraic(Cowbot::Move move)
 
 void ChessBoardEngine::appendCheckOrMate(std::string& move) 
 {
-    if (mBoard.isKingUnderAttack(mBoard.getTurn(), mBoard.getAllPieces())) {
+    if (mBoard->isKingUnderAttack(mBoard->getTurn(), mBoard->getAllPieces())) {
         mLegalMoves.empty() ? move.append("#") : move.append("+");
     }
 }
 
 Cowbot::Move ChessBoardEngine::search()
 {
-    return mSearch.search(6).first;
+    return mSearch->search(6).first;
 }
 
 uint64_t ChessBoardEngine::getHash() const
 {
-    return mBoard.getHash();
+    return mBoard->getHash();
 }

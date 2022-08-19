@@ -3,7 +3,7 @@
 using namespace Cowbot;
 
 ChessBoard::ChessBoard(Attack* ptr, const std::string& layout)
-    : mAttack(ptr), mPieceBB{}, mTurn(Color::White), mCastle{}, mSquareBoard{}
+    : mAttack(ptr), mPieceBB{0}, mTurn(Color::White), mCastle{0}, mSquareBoard{}, mPinnedPieces(0), mEnpassantTarget(0), mZobristTable{}, mZobristHash(0), mStateHistory{}
 {
     initZobristHashes();
     updateChessBoard(layout);
@@ -201,7 +201,7 @@ void ChessBoard::updateRedundantBitboards() noexcept
     mPieceBB[to_int(PieceSets::AllPieces)] = mPieceBB[to_int(PieceSets::WhitePieces)] | mPieceBB[to_int(PieceSets::BlackPieces)];
 }
 
-void ChessBoard::makeMove(const Move& nextMove)
+void ChessBoard::makeMove(Move nextMove)
 {
     Square startingSquare = nextMove.getStartingSquare();
     Square endingSquare = nextMove.getEndingSquare();
@@ -443,7 +443,7 @@ bool ChessBoard::getCastleRights(Castling side, Color turn) const noexcept
     return mCastle[(to_int(turn) << 1) + to_int(side)];
 }
 
-bool ChessBoard::isLegal(const Move& move)
+bool ChessBoard::isLegal(Move move)
 {
     MoveType type = move.getMoveType();
     Square startSquare = move.getStartingSquare();
@@ -699,9 +699,9 @@ bool ChessBoard::containsPromotingPawns() const
     return mTurn == Color::White ? pawns & Utils::SEVENTH_RANK : pawns & Utils::SECOND_RANK;
 }
 
-bool ChessBoard::isCapture(const Move& move) const
+bool ChessBoard::isCapture(Move move) const
 {
-    return Utils::getBitboard(move.getEndingSquare()) & getPieces(!mTurn);
+    return Utils::getBitboard(move.getEndingSquare()) & getPieces(!mTurn) || move.getMoveType() == MoveType::Promotion;
 }
 
 bool ChessBoard::isPseudoLegal(Move move) const

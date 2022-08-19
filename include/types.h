@@ -12,9 +12,9 @@ typedef uint16_t Bitmove;
 
 enum class Color : uint8_t {White, Black};
 
-inline constexpr uint8_t to_int(Color color) noexcept
+inline constexpr uint32_t to_int(Color color) noexcept
 {
-    return static_cast<uint8_t>(color);
+    return static_cast<uint32_t>(color);
 }
 
 inline Color operator!(Color rhs)
@@ -62,9 +62,9 @@ inline Square operator-=(Square& rhs, uint8_t offset)
     return rhs;
 }
 
-inline constexpr uint8_t to_int(Square sq)
+inline constexpr uint32_t to_int(Square sq)
 {
-    return static_cast<uint8_t>(sq);
+    return static_cast<uint32_t>(sq);
 }
 
 enum class PieceSets : uint8_t {
@@ -87,16 +87,16 @@ inline PieceSets operator--(PieceSets& rhs)
     return rhs;
 }
 
-inline constexpr uint8_t to_int(PieceSets piece)
+inline constexpr uint32_t to_int(PieceSets piece)
 {
-    return static_cast<uint8_t>(piece);
+    return static_cast<uint32_t>(piece);
 }
 
 enum class Castling : uint8_t {Kingside, Queenside};
 
-inline constexpr uint8_t to_int(Castling side)
+inline constexpr uint32_t to_int(Castling side)
 {
-    return static_cast<uint8_t>(side);
+    return static_cast<uint32_t>(side);
 }
 
 enum class PieceValues {
@@ -112,25 +112,25 @@ enum class MoveType : uint8_t {
     Quiet, Castle, Promotion, Enpassant
 };
 
-inline constexpr uint8_t to_int(MoveType type) 
+inline constexpr uint32_t to_int(MoveType type) 
 {
-    return static_cast<uint8_t>(type);
+    return static_cast<uint32_t>(type);
 }
 
 enum class PromotionPiece : uint8_t {
     Knight, Bishop, Rook, Queen, Null = 0
 };
 
-inline constexpr uint8_t to_int(PromotionPiece piece)
+inline constexpr uint32_t to_int(PromotionPiece piece)
 {
-    return static_cast<uint8_t>(piece);
+    return static_cast<uint32_t>(piece);
 }
 
 enum class NodeType : uint8_t {
     EXACT = 0b1, UPPERBOUND = 0b10, LOWERBOUND = 0b100
 };
 
-inline constexpr uint8_t to_int(NodeType node)
+inline constexpr uint32_t to_int(NodeType node)
 {
-    return static_cast<uint8_t>(node);
+    return static_cast<uint32_t>(node);
 }

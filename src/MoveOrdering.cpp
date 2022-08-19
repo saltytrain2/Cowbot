@@ -9,7 +9,7 @@
 using namespace Cowbot;
 
 MoveOrdering::MoveOrdering(ChessBoard *board, FakeEval* fakeEval)
-    : mBoard(board), mFakeEval(fakeEval)
+    : mBoard(board), mFakeEval(fakeEval), mHistory{}
 {}
 
 void MoveOrdering::orderMoves(moveVectorIter begin, moveVectorIter end) const

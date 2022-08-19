@@ -76,16 +76,16 @@ public:
     void printSquareBoard() const noexcept;
 
     // makes the move
-    void makeMove(const Move& nextMove);
+    void makeMove(Move nextMove);
     void undoMove();
 
 
-    bool isLegal(const Move& move);
+    bool isLegal(Move move);
     bool isPseudoLegal(Move move) const;
     Bitboard getKingAttackers(Color turn, Bitboard blockers) const;
     bool isKingUnderAttack(Color turn, Bitboard blockers) const;
     bool isKingUnderAttack() const;
-    bool isCapture(const Move& move) const;
+    bool isCapture(Move move) const;
 
     bool containsPromotingPawns() const;
 

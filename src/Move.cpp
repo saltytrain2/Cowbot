@@ -2,6 +2,9 @@
 
 using namespace Cowbot;
 
+Move::Move() : mMove(0)
+{}
+
 Move::Move(std::string lan) : mMove(0)
 {
     updateMove(lan);
@@ -12,7 +15,7 @@ Move::Move(Bitmove src) : mMove(src)
 }
 
 Move::Move(Square startSquare, Square endSquare, MoveType type, PromotionPiece piece) 
-    : mMove(to_int(startSquare) | (to_int(endSquare) << 6) | (to_int(type) << 14) | ((to_int(piece) << 12)))
+    : mMove(to_int(startSquare) | (to_int(endSquare) << 6) | (to_int(type) << 14) | (to_int(piece) << 12))
 {
 }
 

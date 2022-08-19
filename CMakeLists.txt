@@ -21,8 +21,11 @@ set(MY_LINK_FLAGS
 
 if (BUILD_TESTS)
     enable_testing()
+    add_subdirectory(tests)
+endif ()
+
+if (BUILD_GUI)
+    add_subdirectory(gui)
 endif ()
 
 add_subdirectory(src)
-add_subdirectory(tests)
-add_subdirectory(gui)

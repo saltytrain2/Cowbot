@@ -10,7 +10,7 @@ MoveGen::MoveGen(ChessBoard* src, Attack* attack)
 std::vector<Move> MoveGen::generateLegalMoves(Color side)
 {
     std::vector<Move> moveList;
-    moveList.reserve(240);
+    moveList.reserve(256);
 
     Bitboard checkers = mBoard->getKingAttackers(side, mBoard->getAllPieces());
 
