@@ -22,8 +22,9 @@ Currently, the search algorithm completes in a reasonable time in clang, and the
 only runs when built in release mode. LTO is enabled by default for the best runtime results
 
 # TODO
-- [] UCI-compatible CLI
-- [] Implement command-line options (eg. Hash Table Size)
-- [] Additional search techniques (eg. Aspiration Windows)
-- [] Fixing compatibility issues between compilers and build types
-- [] Implementing Multithreading in both GUI and CLI
+- [ ] UCI-compatible CLI
+- [ ] Implement command-line options (eg. Hash Table Size)
+- [ ] Additional search techniques (eg. Aspiration Windows)
+- [ ] Fixing compatibility issues between compilers and build types
+- [ ] Implementing Multithreading in both GUI and CLI
+- [ ] Implementing NNUE evaluation
