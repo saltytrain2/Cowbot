@@ -40,6 +40,10 @@ std::pair<Move, int16_t> Search::search(uint8_t depth)
 
 int16_t Search::alphaBeta(int16_t alpha, int16_t beta, uint8_t depthleft)
 {
+    if (depthleft == 0) {
+        return qsearch(alpha, beta);
+    }
+    
     // attempt to search for this position in the transposition table
     int16_t origAlpha = alpha;
     ZobristHash posHash = mBoard->getHash();
@@ -63,10 +67,6 @@ int16_t Search::alphaBeta(int16_t alpha, int16_t beta, uint8_t depthleft)
     auto legalMoves = mMoveGen->generateLegalMoves(mBoard->getTurn());
     if (legalMoves.empty()) {
         return mBoard->isKingUnderAttack() ? -INT16_MAX : 0;
-    }
-
-    if (depthleft == 0) {
-        return qsearch(alpha, beta);
     }
 
     if (bestMove) {
@@ -109,7 +109,7 @@ int16_t Search::alphaBeta(int16_t alpha, int16_t beta, uint8_t depthleft)
 int16_t Search::qsearch(int16_t alpha, int16_t beta)
 {
     int16_t currentEval = mBoard->getTurn() == Color::White ? mFakeEval->eval(*mBoard) : -mFakeEval->eval(*mBoard);
-    // int16_t currentEval = mFakeEval->eval(*mBoard);
+
     if (currentEval >= beta) {
         return beta;
     }

@@ -67,8 +67,8 @@ uint32_t MoveOrdering::getHistory(Move move) const
 void MoveOrdering::MvvLva(moveVectorIter begin, moveVectorIter end) const
 {
     auto sortVictims = [this](Move x, Move y) {
-        PieceSets xCapturedPiece = mBoard->getPiece(x.getEndingSquare());
-        PieceSets yCapturedPiece = mBoard->getPiece(y.getEndingSquare());
+        PieceSets xCapturedPiece = x.getMoveType() == MoveType::Enpassant ? PieceSets::WhitePawns : mBoard->getPiece(x.getEndingSquare());
+        PieceSets yCapturedPiece = y.getMoveType() == MoveType::Enpassant ? PieceSets::WhitePawns : mBoard->getPiece(y.getEndingSquare());
         PieceSets xMovedPiece = mBoard->getPiece(x.getStartingSquare());
         PieceSets yMovedPiece = mBoard->getPiece(x.getStartingSquare());
         int16_t xEval = mFakeEval->getPieceValue(xCapturedPiece) - mFakeEval->getPieceValue(xMovedPiece);
