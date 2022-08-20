@@ -19,7 +19,7 @@ std::pair<Move, int16_t> Search::search(uint8_t depth)
     mMoveOrdering->orderMoves(legalMoves.begin(), legalMoves.end());
     
     std::vector<std::pair<Move, int16_t>> rootMoves;
-    std::transform(legalMoves.begin(), legalMoves.end(), std::back_inserter(rootMoves), [](auto x) { return std::make_pair(x, 0); });
+    std::transform(legalMoves.begin(), legalMoves.end(), std::back_inserter(rootMoves), [](auto x) { return std::make_pair(x, INT16_MIN + 1); });
     std::pair<Move, int16_t> bestMove;
     bestMove = rootMoves[0];
 
@@ -27,10 +27,10 @@ std::pair<Move, int16_t> Search::search(uint8_t depth)
         for (auto& rootPair: rootMoves) {
             mBoard->makeMove(rootPair.first);
             rootPair.second = -alphaBeta(INT16_MIN + 1, INT16_MAX, i - 1);
+            mBoard->undoMove();
             if (rootPair.second > bestMove.second) {
                 bestMove = rootPair;
             }
-            mBoard->undoMove();
         }
         std::sort(rootMoves.begin(), rootMoves.end(), [](const auto& x, const auto& y) { return x.second > y.second; });
     }

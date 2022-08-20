@@ -26,8 +26,6 @@ TEST_CASE("Mate in 2") {
     auto moveOrdering = std::make_shared<MoveOrdering>(board.get(), fakeEval.get());
     auto search = std::make_shared<Search>(board.get(), moveGen.get(), fakeEval.get(), tt.get(), moveOrdering.get());
     tt->setSize(128);
-    std::cout << std::hex << board->getHash() << std::endl;
-
 
     board->updateChessBoard("2bqkbn1/2pppp2/np2N3/r3P1p1/p2N2B1/5Q2/PPPPKPP1/RNB2r2 w KQkq - 0 1");
     auto start = std::chrono::system_clock::now();
@@ -50,5 +48,14 @@ TEST_CASE("Mate in 2") {
     res = search->search(6).first;
     end = std::chrono::system_clock::now();
     microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "best move: " << res.toString() << " time: " << double(microseconds.count()) / 1000000 << std::endl;
+    CHECK(res.toString() == "b4c3" || res.toString() == "h3g2");
+    std::cout << "time: " << double(microseconds.count()) / 1000000 << std::endl;
+
+    board->updateChessBoard("r1bqkb1r/pppp1ppp/5n2/3Pp3/2Pn4/2N1P3/PP3PPP/R1BQKBNR b KQkq - 0 5");
+    start = std::chrono::system_clock::now();
+    res = search->search(6).first;
+    end = std::chrono::system_clock::now();
+    microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    CHECK(res.toString() == "d4f5");
+    std::cout << "time: " << double(microseconds.count()) / 1000000 << std::endl;
 }
