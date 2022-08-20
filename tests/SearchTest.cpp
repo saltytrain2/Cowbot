@@ -32,7 +32,7 @@ TEST_CASE("Mate in 2") {
     auto res = search->search(6).first;
     auto end = std::chrono::system_clock::now();
     auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    CHECK(res.toString() == "f3f7");
+    CHECK_EQ(res.toString(), "f3f7");
     std::cout << "time: " << double(microseconds.count()) / 1000000 << std::endl;
 
     board->updateChessBoard("1Q6/3r1p1k/6pp/8/1pP1p3/1PbqB3/5PPP/5RK1 b - - 1 1");
@@ -40,7 +40,7 @@ TEST_CASE("Mate in 2") {
     res = search->search(6).first;
     end = std::chrono::system_clock::now();
     microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    CHECK(res.toString() == "d3f1");
+    CHECK_EQ(res.toString(), "d3f1");
     std::cout << "time: " << double(microseconds.count()) / 1000000 << std::endl;
 
     board->updateChessBoard("r3k2r/p1ppqpb1/Bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPB1PPP/R3K2R b KQkq - 0 1");
@@ -48,7 +48,7 @@ TEST_CASE("Mate in 2") {
     res = search->search(6).first;
     end = std::chrono::system_clock::now();
     microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    CHECK(res.toString() == "b4c3" || res.toString() == "h3g2");
+    res.toString() == "b4c3" ? CHECK_UNARY(true) : CHECK_EQ(res.toString(), "h3g2");
     std::cout << "time: " << double(microseconds.count()) / 1000000 << std::endl;
 
     board->updateChessBoard("r1bqkb1r/pppp1ppp/5n2/3Pp3/2Pn4/2N1P3/PP3PPP/R1BQKBNR b KQkq - 0 5");
@@ -56,6 +56,6 @@ TEST_CASE("Mate in 2") {
     res = search->search(6).first;
     end = std::chrono::system_clock::now();
     microseconds = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    CHECK(res.toString() == "d4f5");
+    CHECK_EQ(res.toString(), "d4f5");
     std::cout << "time: " << double(microseconds.count()) / 1000000 << std::endl;
 }
