@@ -6,6 +6,7 @@ class MoveHistory : public wxListView
 {
 public:
     MoveHistory(wxWindow* parent);
+    void clear();
 
 };
 
@@ -15,4 +16,10 @@ MoveHistory::MoveHistory(wxWindow* parent)
     AppendColumn("Move No");
     AppendColumn("White");
     AppendColumn("Black");
+}
+
+void MoveHistory::clear()
+{
+    DeleteAllItems();
+    Update();
 }

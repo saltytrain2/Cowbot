@@ -26,6 +26,8 @@ public:
     void appendCheckOrMate(std::string& move);
     Cowbot::Move search();
     uint64_t getHash() const;
+    void reset();
+    Color getTurn() const;
     
 
 private:
@@ -131,4 +133,15 @@ Cowbot::Move ChessBoardEngine::search()
 uint64_t ChessBoardEngine::getHash() const
 {
     return mBoard->getHash();
+}
+
+void ChessBoardEngine::reset()
+{
+    mBoard->reset();
+    mLegalMoves = mMoveGen->generateLegalMoves(mBoard->getTurn());
+}
+
+Color ChessBoardEngine::getTurn() const
+{
+    return mBoard->getTurn();
 }

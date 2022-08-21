@@ -760,3 +760,9 @@ bool ChessBoard::isPseudoLegal(Move move) const
             return false;
     }
 }
+
+void ChessBoard::reset()
+{
+    updateChessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    mStateHistory.clear();
+}

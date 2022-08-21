@@ -1,23 +1,26 @@
+#pragma once
+
 #include <wx/wx.h>
+
+#include "types.h"
 
 class ChessBoardPiece : public wxObject
 {
 public:
-    ChessBoardPiece(const wxImage& iamge = wxImage(), bool show = true);
+    ChessBoardPiece(PieceSets piece = PieceSets::EmptySquares, bool show = true);
     void setShow(bool show);
     bool getShow() const;
-    void setImage(const wxImage& image);
-    wxImage getImage() const;
-    void scale(int width, int height);
+    void setPiece(PieceSets piece);
+    PieceSets getPiece() const;
 
 private:
-    wxImage mImage;
+    PieceSets mPiece;
     bool mShow;
 };
 
 
-ChessBoardPiece::ChessBoardPiece(const wxImage& image, bool show)
-    : mImage(image),
+ChessBoardPiece::ChessBoardPiece(PieceSets piece, bool show)
+    : mPiece(piece),
       mShow(show)
 {}
 
@@ -31,17 +34,12 @@ bool ChessBoardPiece::getShow() const
     return mShow;
 }
 
-void ChessBoardPiece::setImage(const wxImage& image)
+void ChessBoardPiece::setPiece(PieceSets piece)
 {
-    mImage = image;
+    mPiece = piece;
 }
 
-wxImage ChessBoardPiece::getImage() const
+PieceSets ChessBoardPiece::getPiece() const
 {
-    return mImage;
-}
-
-void ChessBoardPiece::scale(int width, int height)
-{
-    mImage.Rescale(width, height, wxIMAGE_QUALITY_HIGH);
+    return mPiece;
 }

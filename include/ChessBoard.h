@@ -91,6 +91,7 @@ public:
 
     // debug
     bool validateSquareBoard() const;
+    void reset();
 private:
     Attack* mAttack;
     // buffer to store all bitboards describing the board state

@@ -23,18 +23,18 @@ class ChessBoardPanel : public wxPanel
 {
 public:
     ChessBoardPanel(wxWindow* parent);
+    void OnComputerTurn();
+    void reset();
+    void setPerspective(Color side);
 
 private:
-    friend class CowbotGuiFrame;
-
     void OnPaint(wxPaintEvent&);
     void OnLeftDown(wxMouseEvent& evt);
     void OnLeftUp(wxMouseEvent& evt);
     void OnMotion(wxMouseEvent& evt);
-    void OnComputerTurn();
 
     void initPieces();
-    void resizePieces(std::array<ChessBoardPiece, 64>& board, int width, int height);
+    void resizePieces(std::array<wxImage, 12>& pieces, int width, int height);
     void setBoard();
     void makeMove(Cowbot::Move move);
 
@@ -42,12 +42,13 @@ private:
     Square mCurrentSq;
     int mWidth;
     int mHeight;
-    std::array<wxImage, 13> mPieces;
+    std::array<wxImage, 12> mPieces;
     std::array<ChessBoardPiece, 64> mBoard;
     ChessBoardEngine mEngine;
     wxImage mToDrag;
     wxDragImage* mDragImage;
     wxPoint mStartPos;
+    Color mPerspective;
 };
 
 ChessBoardPanel::ChessBoardPanel(wxWindow* parent)
@@ -57,8 +58,8 @@ ChessBoardPanel::ChessBoardPanel(wxWindow* parent)
       mHeight(),
       mPieces(),
       mEngine(),
-      mDragImage(nullptr)
-
+      mDragImage(nullptr),
+      mPerspective(Color::White)
 {
     SetCursor(wxCursor(wxCURSOR_ARROW));
     SetBackgroundColour(*wxWHITE);
@@ -87,8 +88,8 @@ void ChessBoardPanel::OnPaint(wxPaintEvent&)
     wxBrush painterBrush;
     wxColour squareColor;
 
-    auto board = mBoard;
-    resizePieces(board, sqWidth, sqHeight);
+    auto pieces = mPieces;
+    resizePieces(pieces, sqWidth, sqHeight);
 
     wxSize sqSize(sqWidth, sqHeight);
 
@@ -98,8 +99,9 @@ void ChessBoardPanel::OnPaint(wxPaintEvent&)
             painterBrush.SetColour(squareColor);
             painter.SetBrush(painterBrush);
             painter.DrawRectangle(drawCords, sqSize);
-            if (board[8 * i + j].getShow()) {
-                painter.DrawBitmap(wxBitmap(board[8 * i + j].getImage()), drawCords);
+            int index = mPerspective == Color::White ? 8*i + j : 63 - 8*i - j;
+            if (mBoard[index].getShow()) {
+                painter.DrawBitmap(wxBitmap(pieces[to_int(mBoard[index].getPiece())]), drawCords);
             }
             drawCords.x += sqWidth;
         }
@@ -116,7 +118,8 @@ Square ChessBoardPanel::getSquare(const wxPoint& point) const
         return Square::Null;
     }
 
-    return Square(8 * (7 - row) + file);
+    int square = mPerspective == Color::White ? 8 * (7-row) + file : 8 * row + (7 - file);
+    return Square(square);
 }
 
 void ChessBoardPanel::OnLeftDown(wxMouseEvent& evt)
@@ -127,11 +130,12 @@ void ChessBoardPanel::OnLeftDown(wxMouseEvent& evt)
     int sqHeight = mHeight / 8;
 
     mCurrentSq = getSquare(evt.GetPosition());
-    mToDrag = mBoard[to_int(mCurrentSq)].getImage();
-    if (!mToDrag.IsOk()) {
+    PieceSets dragPiece = mBoard[to_int(mCurrentSq)].getPiece();
+    Color turn = mEngine.getTurn();
+    if (dragPiece == PieceSets::EmptySquares || (to_int(dragPiece) & 1) != to_int(turn)) {
         return;
     }
-
+    mToDrag = mPieces[to_int(dragPiece)];
     mBoard[to_int(mCurrentSq)].setShow(false);
     Refresh(true);
     Update();
@@ -215,10 +219,10 @@ void ChessBoardPanel::initPieces()
     mPieces[11] = wxImage(blackKing);
 }
 
-void ChessBoardPanel::resizePieces(std::array<ChessBoardPiece, 64>& board, int width, int height)
+void ChessBoardPanel::resizePieces(std::array<wxImage, 12>& pieces, int width, int height)
 {
-    for (int i = 0; i < 64; ++i) {
-        board[i].scale(width, height);
+    for (auto& piece: pieces) {
+        piece.Rescale(width, height);
     }
 }
 
@@ -226,9 +230,7 @@ void ChessBoardPanel::setBoard()
 {
     for (Square sq = Square::A1; sq < Square::Null; ++sq) {
         PieceSets piece = mEngine.getPiece(sq);
-        if (piece != PieceSets::EmptySquares) {
-            mBoard[to_int(sq)].setImage(mPieces[to_int(piece)]);
-        }
+        mBoard[to_int(sq)].setPiece(piece);
     }
 }
 
@@ -239,7 +241,7 @@ void ChessBoardPanel::makeMove(Cowbot::Move move)
     std::swap(mBoard[to_int(from)], mBoard[to_int(to)]);
 
     if (mEngine.isOccupied(to)) {
-        mBoard[to_int(from)].setImage(wxImage());
+        mBoard[to_int(from)].setPiece(PieceSets::EmptySquares);
     }
 
     MoveType type = move.getMoveType();
@@ -262,10 +264,12 @@ void ChessBoardPanel::makeMove(Cowbot::Move move)
         }
     } else if (type == MoveType::Enpassant) {
         if (Cowbot::Utils::getBitboard(to) & Cowbot::Utils::SIXTH_RANK) {
-            mBoard[to_int(Cowbot::Utils::southOne(to))].setImage(wxImage());
+            mBoard[to_int(Cowbot::Utils::southOne(to))].setPiece(PieceSets::EmptySquares);
         } else {
-            mBoard[to_int(Cowbot::Utils::northOne(to))].setImage(wxImage());
+            mBoard[to_int(Cowbot::Utils::northOne(to))].setPiece(PieceSets::EmptySquares);
         }
+    } else if (type == MoveType::Promotion) {
+        mBoard[to_int(to)].setPiece(PieceSets(to_int(PieceSets::WhiteQueens) + to_int(mEngine.getTurn())));
     }
 
     mEngine.makeMove(move);
@@ -283,4 +287,21 @@ void ChessBoardPanel::OnComputerTurn()
     ChessBoardEvent chessEvt(EVT_PIECE_MOVED, GetId(), algebraic);
     chessEvt.SetEventObject(this);
     ProcessWindowEvent(chessEvt);
+}
+
+void ChessBoardPanel::reset()
+{
+    mEngine.reset();
+    setBoard();
+    Refresh(true);
+    Update();
+}
+
+void ChessBoardPanel::setPerspective(Color side)
+{
+    if (mPerspective != side) {
+        mPerspective = side;
+        Refresh(true);
+        Update();
+    }
 }
