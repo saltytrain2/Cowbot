@@ -28,7 +28,7 @@ public:
     uint64_t getHash() const;
     void reset();
     Color getTurn() const;
-    
+    Result getResult() const;
 
 private:
     std::unique_ptr<Cowbot::Attack> mAttack;
@@ -144,4 +144,12 @@ void ChessBoardEngine::reset()
 Color ChessBoardEngine::getTurn() const
 {
     return mBoard->getTurn();
+}
+
+Result ChessBoardEngine::getResult() const
+{
+    if (mLegalMoves.empty()) {
+        return mBoard->isKingUnderAttack() ? Result(to_int(mBoard->getTurn())) : Result::DRAW;
+    }
+    return Result::ONGOING;
 }

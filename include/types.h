@@ -134,3 +134,7 @@ inline constexpr uint32_t to_int(NodeType node)
 {
     return static_cast<uint32_t>(node);
 }
+
+enum Result : int {
+    BLACK_WIN=0, WHITE_WIN=1, ONGOING=2, DRAW=3
+};

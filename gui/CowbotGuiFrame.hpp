@@ -17,8 +17,9 @@ enum
 
 enum GameState
 {
-    FREE_PLAY, PLAY_WHITE, PLAY_BLACK
+    PLAY_WHITE, PLAY_BLACK, FREE_PLAY
 };
+
 
 class CowbotGuiFrame : public wxFrame
 {
@@ -35,7 +36,7 @@ private:
 
     void OnEnter(wxCommandEvent& evt);
     void OnPieceDrag(ChessBoardEvent& evt);
-    void OnComputerTurn(ChessBoardEvent&);
+    void OnComputerTurn(ChessBoardEvent& evt);
     void OnPlayAsWhite(wxCommandEvent&);
     void OnPlayAsBlack(wxCommandEvent&);
     void OnFreePlay(wxCommandEvent&);
@@ -106,6 +107,7 @@ void CowbotGuiFrame::OnEnter(wxCommandEvent& evt)
 
 void CowbotGuiFrame::OnPieceDrag(ChessBoardEvent& evt)
 {
+    Result res = evt.getResult();
     if (mTurn == Color::White) {
         wxString num;
         mMoveHistory->InsertItem(mFullMoveCounter, num << mFullMoveCounter + 1);
@@ -117,14 +119,23 @@ void CowbotGuiFrame::OnPieceDrag(ChessBoardEvent& evt)
         ++mFullMoveCounter;
     }
 
-    if ((mState == GameState::PLAY_WHITE && mTurn == Color::Black) || (mState == GameState::PLAY_BLACK && mTurn == Color::White)) {
-        ChessBoardEvent chessEvt(EVT_COMPUTER_TURN, GetId());
+    mChessBoard->setResult(res);
+    if (res == Result::ONGOING && ((mState == GameState::PLAY_WHITE && mTurn == Color::Black) || (mState == GameState::PLAY_BLACK && mTurn == Color::White))) {
+        ChessBoardEvent chessEvt(EVT_COMPUTER_TURN, GetId(), std::string(), mChessBoard->getResult());
         chessEvt.SetEventObject(this);
         ProcessWindowEvent(chessEvt);
     }
+
+    if ((res == Result::WHITE_WIN && mState == GameState::PLAY_WHITE) || (res == Result::BLACK_WIN && mState == GameState::PLAY_BLACK)) {
+        wxMessageBox("Congragulations, you beat the computer", "About CowbotGUI", wxOK | wxICON_INFORMATION);
+    } else if (res == Result::DRAW) {
+        wxMessageBox("Could be worse, you drew the computer", "About CowbotGUI", wxOK | wxICON_INFORMATION);
+    } else if (res != Result::ONGOING) {
+        wxMessageBox("Shame, you lost to the computer", "About CowbotGUI", wxOK | wxICON_INFORMATION);
+    }
 }
 
-void CowbotGuiFrame::OnComputerTurn(ChessBoardEvent&)
+void CowbotGuiFrame::OnComputerTurn(ChessBoardEvent& evt)
 {
     mChessBoard->OnComputerTurn();
 }

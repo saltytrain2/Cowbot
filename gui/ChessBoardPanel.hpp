@@ -26,6 +26,8 @@ public:
     void OnComputerTurn();
     void reset();
     void setPerspective(Color side);
+    Result getResult() const;
+    void setResult(Result res);
 
 private:
     void OnPaint(wxPaintEvent&);
@@ -49,6 +51,7 @@ private:
     wxDragImage* mDragImage;
     wxPoint mStartPos;
     Color mPerspective;
+    Result mResult;
 };
 
 ChessBoardPanel::ChessBoardPanel(wxWindow* parent)
@@ -59,7 +62,8 @@ ChessBoardPanel::ChessBoardPanel(wxWindow* parent)
       mPieces(),
       mEngine(),
       mDragImage(nullptr),
-      mPerspective(Color::White)
+      mPerspective(Color::White),
+      mResult(Result::ONGOING)
 {
     SetCursor(wxCursor(wxCURSOR_ARROW));
     SetBackgroundColour(*wxWHITE);
@@ -124,6 +128,10 @@ Square ChessBoardPanel::getSquare(const wxPoint& point) const
 
 void ChessBoardPanel::OnLeftDown(wxMouseEvent& evt)
 {
+    if (mResult != Result::ONGOING) {
+        return;
+    }
+
     evt.Skip();
 
     int sqWidth = mWidth / 8;
@@ -185,7 +193,7 @@ void ChessBoardPanel::OnLeftUp(wxMouseEvent& evt)
     makeMove(move);
     mEngine.appendCheckOrMate(algebraic);
 
-    ChessBoardEvent chessEvt(EVT_PIECE_MOVED, GetId(), algebraic);
+    ChessBoardEvent chessEvt(EVT_PIECE_MOVED, GetId(), algebraic, mEngine.getResult());
     chessEvt.SetEventObject(this);
     ProcessWindowEvent(chessEvt);
 }
@@ -284,7 +292,7 @@ void ChessBoardPanel::OnComputerTurn()
     makeMove(bestMove);
     mEngine.appendCheckOrMate(algebraic);
 
-    ChessBoardEvent chessEvt(EVT_PIECE_MOVED, GetId(), algebraic);
+    ChessBoardEvent chessEvt(EVT_PIECE_MOVED, GetId(), algebraic, mEngine.getResult());
     chessEvt.SetEventObject(this);
     ProcessWindowEvent(chessEvt);
 }
@@ -304,4 +312,14 @@ void ChessBoardPanel::setPerspective(Color side)
         Refresh(true);
         Update();
     }
+}
+
+Result ChessBoardPanel::getResult() const
+{
+    return mEngine.getResult();
+}
+
+void ChessBoardPanel::setResult(Result res)
+{
+    mResult = res;
 }
