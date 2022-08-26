@@ -300,6 +300,7 @@ void ChessBoardPanel::OnComputerTurn()
 void ChessBoardPanel::reset()
 {
     mEngine.reset();
+    mResult = Result::ONGOING;
     setBoard();
     Refresh(true);
     Update();
